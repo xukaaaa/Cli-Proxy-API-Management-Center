@@ -10,6 +10,19 @@ import styles from './QuotaPage.module.scss';
 const HIGH_PERCENT_THRESHOLD = 70;
 const MEDIUM_PERCENT_THRESHOLD = 30;
 
+const providerConfig = {
+  antigravity: {
+    name: 'Antigravity',
+    icon: 'A',
+    className: 'antigravity'
+  },
+  kiro: {
+    name: 'Kiro',
+    icon: 'K',
+    className: 'kiro'
+  }
+} as const;
+
 function getPercentLevel(percent: number): 'high' | 'medium' | 'low' {
   if (percent >= HIGH_PERCENT_THRESHOLD) return 'high';
   if (percent >= MEDIUM_PERCENT_THRESHOLD) return 'medium';
@@ -190,19 +203,6 @@ interface ProviderSectionProps {
 }
 
 function ProviderSection({ provider, accounts, locale, t }: ProviderSectionProps) {
-  const providerConfig = {
-    antigravity: {
-      name: 'Antigravity',
-      icon: 'A',
-      className: 'antigravity'
-    },
-    kiro: {
-      name: 'Kiro',
-      icon: 'K',
-      className: 'kiro'
-    }
-  };
-
   const config = providerConfig[provider];
 
   return (
