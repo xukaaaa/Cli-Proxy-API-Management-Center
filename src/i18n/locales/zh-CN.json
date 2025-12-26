@@ -89,6 +89,7 @@
     "auth_files": "认证文件",
     "oauth": "OAuth 登录",
     "usage_stats": "使用统计",
+    "quota_check": "配额检查",
     "config_management": "配置管理",
     "logs": "日志查看",
     "system_info": "中心信息"
@@ -333,6 +334,7 @@
     "filter_antigravity": "Antigravity",
     "filter_iflow": "iFlow",
     "filter_vertex": "Vertex",
+    "filter_kiro": "Kiro",
     "filter_empty": "空文件",
     "filter_unknown": "其他",
     "type_qwen": "Qwen",
@@ -344,6 +346,7 @@
     "type_antigravity": "Antigravity",
     "type_iflow": "iFlow",
     "type_vertex": "Vertex",
+    "type_kiro": "Kiro",
     "type_empty": "空文件",
     "type_unknown": "其他",
     "type_virtual": "虚拟认证文件",
@@ -768,6 +771,23 @@
   "sidebar": {
     "toggle_expand": "展开侧边栏",
     "toggle_collapse": "收起侧边栏"
+  },
+  "quota": {
+    "title": "配额检查",
+    "refresh": "刷新",
+    "last_updated": "上次更新",
+    "errors_occurred": "部分请求出错",
+    "empty_title": "暂无配额数据",
+    "empty_desc": "未找到 Antigravity 或 Kiro 认证文件。请上传认证文件以检查配额。",
+    "accounts": "个账号",
+    "used": "已使用",
+    "limit": "限额",
+    "remaining": "剩余",
+    "reset_time": "重置时间",
+    "no_quota_data": "暂无配额数据",
+    "monthly_credits": "每月额度",
+    "free_trial": "免费试用",
+    "expires": "到期"
   },
   "footer": {
     "api_version": "CLI Proxy API 版本",

@@ -1,0 +1,532 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+.container {
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+  position: relative;
+}
+
+// Header
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+}
+
+.pageTitle {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.lastUpdated {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+// Error Box
+.errorBox {
+  padding: 12px 16px;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--error-color);
+  border-radius: $radius-md;
+  color: var(--error-color);
+  font-size: 13px;
+}
+
+.errorList {
+  margin: 8px 0 0 0;
+  padding: 0 0 0 16px;
+
+  li {
+    margin: 4px 0;
+  }
+}
+
+// Loading Overlay
+.loadingOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(243, 244, 246, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+:global([data-theme='dark']) .loadingOverlay {
+  background: rgba(25, 25, 25, 0.72);
+}
+
+.loadingOverlayContent {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: $radius-lg;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  box-shadow: var(--shadow-lg);
+}
+
+.loadingOverlaySpinner {
+  border-color: rgba(59, 130, 246, 0.25);
+  border-top-color: var(--primary-color);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.25);
+}
+
+.loadingOverlayText {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+// Empty State
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  gap: 12px;
+  background: var(--bg-secondary);
+  border-radius: $radius-lg;
+  border: 1px solid var(--border-color);
+}
+
+.emptyIcon {
+  font-size: 48px;
+  color: var(--text-tertiary);
+  opacity: 0.6;
+}
+
+.emptyTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.emptyDesc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+  max-width: 400px;
+}
+
+.hint {
+  color: var(--text-secondary);
+  font-size: 13px;
+  text-align: center;
+  padding: 24px 16px;
+}
+
+// ==========================================
+// SECTION (Provider Group)
+// ==========================================
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-md;
+  padding-bottom: $spacing-sm;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sectionLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.providerIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: $radius-md;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+
+  &.antigravity {
+    background: linear-gradient(135deg, #4285f4, #34a853);
+  }
+
+  &.kiro {
+    background: linear-gradient(135deg, #ff9900, #ff6600);
+  }
+}
+
+.providerName {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.sectionCount {
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  padding: 4px 10px;
+  border-radius: $radius-full;
+  white-space: nowrap;
+}
+
+// ==========================================
+// ACCOUNTS LIST (Vertical - not grid!)
+// ==========================================
+.accountsList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+// ==========================================
+// ACCOUNT CARD
+// ==========================================
+.accountCard {
+  background: var(--bg-secondary);
+  border-radius: $radius-lg;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  transition: border-color $transition-fast, box-shadow $transition-fast;
+
+  &:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  &.hasError {
+    border-color: var(--error-color);
+  }
+}
+
+// Card Header (Top)
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-md;
+  gap: $spacing-md;
+  flex-wrap: wrap;
+}
+
+.cardIdentity {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  min-width: 0;
+  flex: 1;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-color), #6366f1);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.email {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex-shrink: 0;
+}
+
+.refreshBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: $radius-sm;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all $transition-fast;
+
+  &:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background: rgba(59, 130, 246, 0.05);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .spinning {
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: $radius-full;
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--primary-color);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+// Tags Row (optional)
+.tagsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+  padding: 0 $spacing-md $spacing-sm $spacing-md;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: $radius-full;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+// Error State
+.accountError {
+  margin: 0 $spacing-md $spacing-md $spacing-md;
+  padding: 10px 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: $radius-sm;
+  color: var(--error-color);
+  font-size: 12px;
+  word-break: break-word;
+}
+
+// ==========================================
+// RESOURCE LIST (Quota Items)
+// ==========================================
+.resourceList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  padding: $spacing-md;
+  padding-top: 0;
+}
+
+// ==========================================
+// RESOURCE ROW (Single Quota Item)
+// ==========================================
+.resourceRow {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  padding: $spacing-md;
+  background: var(--bg-primary);
+  border-radius: $radius-md;
+  border: 1px solid var(--border-color);
+  min-height: 72px;
+}
+
+// Row 1: Info line
+.resourceInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-md;
+  flex-wrap: wrap;
+}
+
+.resourceIdentity {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  min-width: 0;
+  flex: 1;
+}
+
+.modelIcon {
+  width: 22px;
+  height: 22px;
+  border-radius: $radius-sm;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.modelName {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.resourceMetrics {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  flex-shrink: 0;
+}
+
+.percentage {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: $radius-full;
+
+  &.high {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+  }
+
+  &.medium {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+  }
+
+  &.low {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+  }
+}
+
+.resetTime {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+
+  svg {
+    flex-shrink: 0;
+  }
+}
+
+// Row 2: Progress Bar
+.progressBar {
+  margin-top: 4px;
+}
+
+.progressTrack {
+  height: 10px;
+  background: var(--bg-tertiary);
+  border-radius: $radius-full;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: $radius-full;
+  transition: width 0.3s ease;
+
+  &.high {
+    background: linear-gradient(90deg, #4ade80, #22c55e);
+  }
+
+  &.medium {
+    background: linear-gradient(90deg, #fbbf24, #f59e0b);
+  }
+
+  &.low {
+    background: linear-gradient(90deg, #f87171, #ef4444);
+  }
+}
+
+// ==========================================
+// RESPONSIVE
+// ==========================================
+@include mobile {
+  .section {
+    padding: $spacing-md;
+  }
+
+  .sectionHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $spacing-sm;
+  }
+
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .cardActions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .resourceInfo {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $spacing-sm;
+  }
+
+  .resourceMetrics {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
