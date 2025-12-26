@@ -64,24 +64,29 @@ async function fetchAntigravityQuota(
 async function fetchAntigravitySubscription(
   accessToken: string
 ): Promise<AntigravitySubscriptionResponse> {
-  const response = await fetch(CLOUDFLARE_WORKER_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      provider: 'antigravity',
-      action: 'subscription',
-      accessToken
-    })
-  });
+  try {
+    const response = await fetch(CLOUDFLARE_WORKER_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        provider: 'antigravity',
+        action: 'subscription',
+        accessToken
+      })
+    });
 
-  if (!response.ok) {
+    if (!response.ok) {
+      // Don't throw, just return empty - subscription is optional
+      return {};
+    }
+
+    return response.json();
+  } catch {
     // Don't throw, just return empty - subscription is optional
     return {};
   }
-
-  return response.json();
 }
 
 /**
