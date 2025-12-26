@@ -8,6 +8,7 @@ import { AiProvidersPage } from '@/pages/AiProvidersPage';
 import { AuthFilesPage } from '@/pages/AuthFilesPage';
 import { OAuthPage } from '@/pages/OAuthPage';
 import { UsagePage } from '@/pages/UsagePage';
+import { QuotaPage } from '@/pages/QuotaPage';
 import { ConfigPage } from '@/pages/ConfigPage';
 import { LogsPage } from '@/pages/LogsPage';
 import { SystemPage } from '@/pages/SystemPage';
@@ -85,6 +86,7 @@ function App() {
           <Route path="auth-files" element={<AuthFilesPage />} />
           <Route path="oauth" element={<OAuthPage />} />
           <Route path="usage" element={<UsagePage />} />
+          <Route path="quota" element={<QuotaPage />} />
           <Route path="config" element={<ConfigPage />} />
           <Route path="logs" element={<LogsPage />} />
           <Route path="system" element={<SystemPage />} />
