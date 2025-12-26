@@ -16,7 +16,11 @@ import type {
   KiroAuthContent
 } from '@/types/quota';
 
-const CLOUDFLARE_WORKER_URL = 'https://cliproxyapi.suytchetvigai1234.workers.dev/';
+const CLOUDFLARE_WORKER_URL =
+  (typeof process !== 'undefined' &&
+    process.env &&
+    (process.env.CLOUDFLARE_WORKER_URL || process.env.NEXT_PUBLIC_CLOUDFLARE_WORKER_URL)) ||
+  'https://cliproxyapi.suytchetvigai1234.workers.dev/';
 
 /**
  * Download auth file content from the server
