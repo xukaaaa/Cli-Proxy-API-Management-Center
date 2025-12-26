@@ -9,6 +9,7 @@ import styles from './QuotaPage.module.scss';
 
 const HIGH_PERCENT_THRESHOLD = 70;
 const MEDIUM_PERCENT_THRESHOLD = 30;
+const RELATIVE_TIME_THRESHOLD_HOURS = 24;
 
 function getPercentLevel(percent: number): 'high' | 'medium' | 'low' {
   if (percent >= HIGH_PERCENT_THRESHOLD) return 'high';
@@ -25,8 +26,8 @@ function formatResetTime(isoString?: string, locale?: string): string {
     const now = new Date();
     const diff = date.getTime() - now.getTime();
     
-    // If reset time is in the future and less than 24 hours, show relative time
-    if (diff > 0 && diff < 24 * 60 * 60 * 1000) {
+    // If reset time is in the future and less than the threshold, show relative time
+    if (diff > 0 && diff < RELATIVE_TIME_THRESHOLD_HOURS * 60 * 60 * 1000) {
       const hours = Math.floor(diff / (60 * 60 * 1000));
       const minutes = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
       if (hours > 0) {
