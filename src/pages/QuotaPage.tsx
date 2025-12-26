@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { IconRefreshCw, IconTimer } from '@/components/ui/icons';
+import { IconRefreshCw, IconTimer, IconChartLine } from '@/components/ui/icons';
 import { useAuthStore, useQuotaStore } from '@/stores';
 import type { QuotaProvider, QuotaResult, QuotaInfo } from '@/types/quota';
 import styles from './QuotaPage.module.scss';
@@ -328,7 +328,9 @@ export function QuotaPage() {
 
       {!hasAnyQuotas && !loading && (
         <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>📊</div>
+          <div className={styles.emptyIcon} role="img" aria-label={t('quota.empty_icon_label')}>
+            <IconChartLine size={48} />
+          </div>
           <h3 className={styles.emptyTitle}>{t('quota.empty_title')}</h3>
           <p className={styles.emptyDesc}>{t('quota.empty_desc')}</p>
         </div>

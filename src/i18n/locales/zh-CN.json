@@ -779,6 +779,7 @@
     "errors_occurred": "部分请求出错",
     "empty_title": "暂无配额数据",
     "empty_desc": "未找到 Antigravity 或 Kiro 认证文件。请上传认证文件以检查配额。",
+    "empty_icon_label": "图表图标",
     "accounts": "个账号",
     "used": "已使用",
     "limit": "限额",

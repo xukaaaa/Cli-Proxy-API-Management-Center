@@ -779,6 +779,7 @@
     "errors_occurred": "Some errors occurred",
     "empty_title": "No Quota Data",
     "empty_desc": "No Antigravity or Kiro auth files found. Upload auth files to check quota.",
+    "empty_icon_label": "Chart icon",
     "accounts": "accounts",
     "used": "Used",
     "limit": "Limit",
