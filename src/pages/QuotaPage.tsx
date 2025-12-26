@@ -150,10 +150,10 @@ function AccountCard({ result, locale, t, onRefresh, refreshing }: AccountCardPr
       </div>
 
       {/* Tags Row (optional - for additional subscription info) */}
-      {result.subscriptionType && result.quotas.length > 0 && result.quotas[0]?.subscriptionType && 
-        result.quotas[0].subscriptionType !== result.subscriptionType && (
+      {result.subscriptionType && result.quotas.length > 0 && result.quotas[0]?.subscriptionType &&
+        result.quotas[0]?.subscriptionType !== result.subscriptionType && (
         <div className={styles.tagsRow}>
-          <span className={styles.tag}>{result.quotas[0].subscriptionType}</span>
+          <span className={styles.tag}>{result.quotas[0]?.subscriptionType}</span>
         </div>
       )}
 
