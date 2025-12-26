@@ -246,7 +246,9 @@ export function QuotaPage() {
     if (connectionStatus === 'connected') {
       fetchQuotas();
     }
-  }, [connectionStatus, fetchQuotas]);
+    // fetchQuotas is a stable reference from Zustand store and doesn't need to be in dependencies
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connectionStatus]);
 
   const handleRefresh = () => {
     fetchQuotas();
