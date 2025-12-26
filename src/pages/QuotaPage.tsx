@@ -7,9 +7,12 @@ import { useAuthStore, useQuotaStore } from '@/stores';
 import type { QuotaProvider, QuotaResult, QuotaInfo } from '@/types/quota';
 import styles from './QuotaPage.module.scss';
 
+const HIGH_PERCENT_THRESHOLD = 70;
+const MEDIUM_PERCENT_THRESHOLD = 30;
+
 function getPercentLevel(percent: number): 'high' | 'medium' | 'low' {
-  if (percent >= 70) return 'high';
-  if (percent >= 30) return 'medium';
+  if (percent >= HIGH_PERCENT_THRESHOLD) return 'high';
+  if (percent >= MEDIUM_PERCENT_THRESHOLD) return 'medium';
   return 'low';
 }
 
