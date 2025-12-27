@@ -16,7 +16,7 @@ const baseSvgProps: SVGProps<SVGSVGElement> = {
   strokeLinecap: 'round',
   strokeLinejoin: 'round',
   'aria-hidden': 'true',
-  focusable: 'false'
+  focusable: 'false',
 };
 
 export function IconSlidersHorizontal({ size = 20, ...props }: IconProps) {
@@ -311,6 +311,15 @@ export function IconLayoutDashboard({ size = 20, ...props }: IconProps) {
       <rect width="7" height="5" x="14" y="3" rx="1" />
       <rect width="7" height="9" x="14" y="12" rx="1" />
       <rect width="7" height="5" x="3" y="16" rx="1" />
+    </svg>
+  );
+}
+
+export function IconGauge({ size = 20, ...props }: IconProps) {
+  return (
+    <svg {...baseSvgProps} width={size} height={size} {...props}>
+      <path d="m12 14 4-4" />
+      <path d="M3.34 19a10 10 0 1 1 17.32 0" />
     </svg>
   );
 }

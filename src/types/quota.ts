@@ -4,9 +4,16 @@
 
 export type QuotaProvider = 'antigravity' | 'kiro';
 
-// Antigravity API response format
+/** Model category for grouping */
+export type ModelCategory = 'gemini-flash' | 'gemini-pro' | 'claude' | 'other';
+
+// Antigravity API response format (extended with more fields)
 export interface AntigravityModel {
-  displayName: string;
+  displayName?: string;
+  model?: string;
+  modelProvider?: string;
+  apiProvider?: string;
+  isInternal?: boolean;
   quotaInfo?: {
     remainingFraction: number;
     resetTime?: string;
@@ -74,16 +81,31 @@ export interface QuotaInfo {
   remainingPercent: number;
   resetTime?: string;
   subscriptionType?: string;
-  /** If true, display as "used/limit" instead of percentage */
+  /** If true, display as "remaining/limit" instead of percentage */
   isAbsoluteValue?: boolean;
   /** For free trial expiry time (ISO string) */
   expiryTime?: string;
+  /** Model category for grouping (Antigravity only) */
+  category?: ModelCategory;
+}
+
+/** Grouped quotas by category (for Antigravity) */
+export interface QuotaGroup {
+  category: ModelCategory;
+  displayName: string;
+  quotas: QuotaInfo[];
+  /** Average remaining percent across all models in group */
+  avgRemainingPercent: number;
+  /** Earliest reset time in group */
+  earliestResetTime?: string;
 }
 
 export interface QuotaResult {
   provider: QuotaProvider;
   email: string;
   quotas: QuotaInfo[];
+  /** Grouped quotas for collapsible display (Antigravity) */
+  groups?: QuotaGroup[];
   error?: string;
   subscriptionType?: string;
 }
