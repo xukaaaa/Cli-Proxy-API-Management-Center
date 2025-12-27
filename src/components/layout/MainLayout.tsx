@@ -16,6 +16,7 @@ import {
   IconBot,
   IconChartLine,
   IconFileText,
+  IconGauge,
   IconInfo,
   IconKey,
   IconLayoutDashboard,
@@ -42,6 +43,7 @@ const sidebarIcons: Record<string, ReactNode> = {
   authFiles: <IconFileText size={18} />,
   oauth: <IconShield size={18} />,
   usage: <IconChartLine size={18} />,
+  quota: <IconGauge size={18} />,
   config: <IconSettings size={18} />,
   logs: <IconScrollText size={18} />,
   system: <IconInfo size={18} />,
@@ -124,7 +126,13 @@ const headerIcons = {
         </clipPath>
       </defs>
       <circle cx="12" cy="12" r="4" />
-      <circle cx="12" cy="12" r="4" clipPath="url(#mainLayoutAutoThemeSunLeftHalf)" fill="currentColor" />
+      <circle
+        cx="12"
+        cy="12"
+        r="4"
+        clipPath="url(#mainLayoutAutoThemeSunLeftHalf)"
+        fill="currentColor"
+      />
       <path d="M12 2v2" />
       <path d="M12 20v2" />
       <path d="M4.93 4.93l1.41 1.41" />
@@ -354,6 +362,7 @@ export function MainLayout() {
     { path: '/auth-files', label: t('nav.auth_files'), icon: sidebarIcons.authFiles },
     { path: '/oauth', label: t('nav.oauth', { defaultValue: 'OAuth' }), icon: sidebarIcons.oauth },
     { path: '/usage', label: t('nav.usage_stats'), icon: sidebarIcons.usage },
+    { path: '/quota', label: t('nav.quota_check'), icon: sidebarIcons.quota },
     { path: '/config', label: t('nav.config_management'), icon: sidebarIcons.config },
     ...(config?.loggingToFile
       ? [{ path: '/logs', label: t('nav.logs'), icon: sidebarIcons.logs }]

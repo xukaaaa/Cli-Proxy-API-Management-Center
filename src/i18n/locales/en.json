@@ -89,6 +89,7 @@
     "auth_files": "Auth Files",
     "oauth": "OAuth Login",
     "usage_stats": "Usage Statistics",
+    "quota_check": "Quota Check",
     "config_management": "Config Management",
     "logs": "Logs Viewer",
     "system_info": "Management Center Info"
@@ -333,6 +334,7 @@
     "filter_antigravity": "Antigravity",
     "filter_iflow": "iFlow",
     "filter_vertex": "Vertex",
+    "filter_kiro": "Kiro",
     "filter_empty": "Empty",
     "filter_unknown": "Other",
     "type_qwen": "Qwen",
@@ -344,6 +346,7 @@
     "type_antigravity": "Antigravity",
     "type_iflow": "iFlow",
     "type_vertex": "Vertex",
+    "type_kiro": "Kiro",
     "type_empty": "Empty",
     "type_unknown": "Other",
     "type_virtual": "Virtual auth file",
@@ -768,6 +771,23 @@
   "sidebar": {
     "toggle_expand": "Expand sidebar",
     "toggle_collapse": "Collapse sidebar"
+  },
+  "quota": {
+    "title": "Quota Check",
+    "refresh": "Refresh",
+    "last_updated": "Last updated",
+    "errors_occurred": "Some errors occurred",
+    "empty_title": "No Quota Data",
+    "empty_desc": "No Antigravity or Kiro auth files found. Upload auth files to check quota.",
+    "accounts": "accounts",
+    "used": "Used",
+    "limit": "Limit",
+    "remaining": "Remaining",
+    "reset_time": "Reset",
+    "no_quota_data": "No quota data available",
+    "monthly_credits": "Monthly Credits",
+    "free_trial": "Free Trial",
+    "expires": "Expires"
   },
   "footer": {
     "api_version": "CLI Proxy API Version",
