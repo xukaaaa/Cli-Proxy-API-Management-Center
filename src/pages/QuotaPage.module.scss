@@ -166,36 +166,22 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.sectionLeft {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-}
-
-.providerIcon {
-  width: 32px;
-  height: 32px;
-  border-radius: $radius-md;
-  display: grid;
-  place-items: center;
+.providerBadge {
+  padding: 4px 10px;
+  border-radius: 12px;
   font-size: 14px;
-  font-weight: 700;
-  color: #fff;
+  font-weight: 600;
+  white-space: nowrap;
 
   &.antigravity {
-    background: linear-gradient(135deg, #4285f4, #34a853);
+    background: linear-gradient(135deg, rgba(66, 133, 244, 0.15), rgba(52, 168, 83, 0.15));
+    color: #4285f4;
   }
 
   &.kiro {
-    background: linear-gradient(135deg, #ff9900, #ff6600);
+    background: linear-gradient(135deg, rgba(255, 153, 0, 0.15), rgba(255, 102, 0, 0.15));
+    color: #ff9900;
   }
-}
-
-.providerName {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
 }
 
 .sectionCount {
@@ -208,11 +194,11 @@
 }
 
 // ==========================================
-// ACCOUNTS LIST (Vertical - not grid!)
+// ACCOUNTS LIST (Grid layout)
 // ==========================================
 .accountsList {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: $spacing-md;
 }
 
@@ -249,31 +235,20 @@
 }
 
 .cardIdentity {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
   min-width: 0;
   flex: 1;
-}
-
-.avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary-color), #6366f1);
-  color: #fff;
-  display: grid;
-  place-items: center;
-  font-size: 14px;
-  font-weight: 700;
-  flex-shrink: 0;
+  max-width: 100%;
 }
 
 .email {
+  display: block;
   font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
-  word-break: break-all;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .cardActions {
@@ -418,21 +393,21 @@
 }
 
 .modelName {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--text-primary);
-  word-break: break-word;
+  white-space: nowrap;
 }
 
 .resourceMetrics {
   display: flex;
   align-items: center;
-  gap: $spacing-md;
+  gap: $spacing-sm;
   flex-shrink: 0;
 }
 
 .percentage {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   padding: 2px 8px;
   border-radius: $radius-full;
@@ -476,7 +451,7 @@
   align-items: center;
   gap: 4px;
   font-size: 11px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   white-space: nowrap;
 
   svg {
@@ -648,34 +623,118 @@
 // RESPONSIVE
 // ==========================================
 @include mobile {
+  .container {
+    gap: $spacing-md;
+  }
+
+  .header {
+    gap: $spacing-sm;
+  }
+
+  .pageTitle {
+    font-size: 22px;
+  }
+
+  .lastUpdated {
+    font-size: 11px;
+  }
+
   .section {
     padding: $spacing-md;
+    gap: $spacing-sm;
   }
 
   .sectionHeader {
-    flex-direction: column;
-    align-items: flex-start;
     gap: $spacing-sm;
+    padding-bottom: $spacing-sm;
+  }
+
+  .providerIcon {
+    width: 26px;
+    height: 26px;
+    font-size: 12px;
+  }
+
+  .providerName {
+    font-size: 15px;
+  }
+
+  .sectionCount {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+
+  .accountsList {
+    gap: $spacing-sm;
+  }
+
+  .accountCard {
+    border-radius: $radius-md;
   }
 
   .cardHeader {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .cardActions {
-    width: 100%;
-    justify-content: flex-end;
-  }
-
-  .resourceInfo {
-    flex-direction: column;
-    align-items: flex-start;
+    padding: $spacing-sm;
     gap: $spacing-sm;
   }
 
-  .resourceMetrics {
-    width: 100%;
-    justify-content: space-between;
+  .avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .email {
+    font-size: 12px;
+  }
+
+  .badge {
+    padding: 3px 8px;
+    font-size: 10px;
+  }
+
+  .resourceList {
+    padding: $spacing-sm;
+    padding-top: 0;
+    gap: $spacing-xs;
+  }
+
+  .resourceRow {
+    padding: $spacing-sm;
+    gap: $spacing-xs;
+    min-height: auto;
+    border-radius: $radius-sm;
+  }
+
+  .modelName {
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .percentage {
+    font-size: 11px;
+    padding: 2px 6px;
+  }
+
+  .resetTime {
+    font-size: 10px;
+    gap: 3px;
+  }
+
+  .progressTrack {
+    height: 8px;
+  }
+
+  .progressBar {
+    margin-top: 3px;
+  }
+
+  .resourceInfo {
+    flex-wrap: wrap;
+    gap: $spacing-sm;
+  }
+
+  .resourceIdentity {
+    flex: 1;
+    min-width: 120px;
   }
 }

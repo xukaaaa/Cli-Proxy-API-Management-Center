@@ -292,7 +292,9 @@
     align-items: center;
     gap: $spacing-sm;
     cursor: pointer;
-    transition: background $transition-fast, color $transition-fast;
+    transition: background $transition-fast, color $transition-fast, border-color $transition-fast;
+    border: 1px solid transparent;
+    overflow: hidden;
 
     .nav-icon {
       width: 20px;
