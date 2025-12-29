@@ -123,16 +123,16 @@ async function fetchKiroQuota(accessToken: string, profileArn: string): Promise<
   return response.json();
 }
 
-// Category display names
+// Category display names (excluding 'other')
 const CATEGORY_DISPLAY_NAMES: Record<ModelCategory, string> = {
   'gemini-flash': 'Gemini Flash',
   'gemini-pro': 'Gemini Pro',
   claude: 'Claude',
-  other: 'Other Models',
+  other: '',
 };
 
-// Category order for display (Claude first)
-const CATEGORY_ORDER: ModelCategory[] = ['claude', 'gemini-pro', 'gemini-flash', 'other'];
+// Category order for display (Claude first, no 'other')
+const CATEGORY_ORDER: ModelCategory[] = ['claude', 'gemini-pro', 'gemini-flash'];
 
 /**
  * Determine model category from model ID
@@ -233,7 +233,7 @@ function parseAntigravityResponse(
 
 /**
  * Parse Kiro response to unified QuotaInfo format
- * Creates entries for both Monthly Credits and Free Trial (if active)
+ * Creates entries for Free Trial (first, if active) and Monthly Credits
  */
 function parseKiroResponse(response: KiroQuotaResponse, email: string): QuotaInfo[] {
   const quotas: QuotaInfo[] = [];
@@ -245,7 +245,32 @@ function parseKiroResponse(response: KiroQuotaResponse, email: string): QuotaInf
   const subscriptionType = response.subscriptionInfo?.subscriptionTitle || 'Unknown';
 
   for (const usage of response.usageBreakdownList) {
-    // Monthly Credits entry
+    // Free Trial entry FIRST (only if not expired)
+    const trialInfo = usage.freeTrialInfo;
+    if (trialInfo && trialInfo.freeTrialStatus !== 'EXPIRED') {
+      const trialUsed = trialInfo.currentUsageWithPrecision ?? trialInfo.currentUsage ?? 0;
+      const trialLimit = trialInfo.usageLimitWithPrecision ?? trialInfo.usageLimit ?? 0;
+      const trialRemainingPercent =
+        trialLimit > 0 ? ((trialLimit - trialUsed) / trialLimit) * 100 : 0;
+      const expiryTime = trialInfo.freeTrialExpiry
+        ? new Date(trialInfo.freeTrialExpiry * 1000).toISOString()
+        : undefined;
+
+      quotas.push({
+        provider: 'kiro',
+        email,
+        modelName: 'Free Trial',
+        displayName: 'Free Trial',
+        used: Math.round(trialUsed * 100) / 100,
+        limit: trialLimit,
+        remainingPercent: trialRemainingPercent,
+        subscriptionType,
+        isAbsoluteValue: true,
+        expiryTime,
+      });
+    }
+
+    // Monthly Credits entry SECOND
     const monthlyUsed = usage.currentUsage ?? 0;
     const monthlyLimit = usage.usageLimit ?? 0;
     const monthlyRemainingPercent =
@@ -266,31 +291,6 @@ function parseKiroResponse(response: KiroQuotaResponse, email: string): QuotaInf
       subscriptionType,
       isAbsoluteValue: true,
     });
-
-    // Free Trial entry (only if not expired)
-    const trialInfo = usage.freeTrialInfo;
-    if (trialInfo && trialInfo.freeTrialStatus !== 'EXPIRED') {
-      const trialUsed = trialInfo.currentUsageWithPrecision ?? trialInfo.currentUsage ?? 0;
-      const trialLimit = trialInfo.usageLimitWithPrecision ?? trialInfo.usageLimit ?? 0;
-      const trialRemainingPercent =
-        trialLimit > 0 ? ((trialLimit - trialUsed) / trialLimit) * 100 : 0;
-      const expiryTime = trialInfo.freeTrialExpiry
-        ? new Date(trialInfo.freeTrialExpiry * 1000).toISOString()
-        : undefined;
-
-      quotas.push({
-        provider: 'kiro',
-        email,
-        modelName: 'Free Trial',
-        displayName: 'Free Trial',
-        used: Math.round(trialUsed * 100) / 100, // Round to 2 decimal places
-        limit: trialLimit,
-        remainingPercent: trialRemainingPercent,
-        subscriptionType,
-        isAbsoluteValue: true,
-        expiryTime,
-      });
-    }
   }
 
   return quotas;

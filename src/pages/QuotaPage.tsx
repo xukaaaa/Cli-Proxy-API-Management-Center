@@ -1,14 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import {
-  IconRefreshCw,
-  IconTimer,
-  IconChartLine,
-  IconChevronDown,
-  IconChevronUp,
-} from '@/components/ui/icons';
+import { IconRefreshCw, IconTimer, IconChartLine } from '@/components/ui/icons';
 import { useAuthStore, useQuotaStore } from '@/stores';
 import type { QuotaProvider, QuotaResult, QuotaInfo, QuotaGroup } from '@/types/quota';
 import styles from './QuotaPage.module.scss';
@@ -20,17 +14,17 @@ const MEDIUM_PERCENT_THRESHOLD = 30;
 // Threshold for showing relative time (in hours)
 const RELATIVE_TIME_THRESHOLD_HOURS = 24;
 
-// Provider configuration
+// Provider configuration (Kiro first)
 const PROVIDER_CONFIG = {
-  antigravity: {
-    name: 'Antigravity',
-    icon: 'A',
-    className: 'antigravity',
-  },
   kiro: {
     name: 'Kiro',
     icon: 'K',
     className: 'kiro',
+  },
+  antigravity: {
+    name: 'Antigravity',
+    icon: 'A',
+    className: 'antigravity',
   },
 } as const;
 
@@ -40,7 +34,7 @@ function getPercentLevel(percent: number): 'high' | 'medium' | 'low' {
   return 'low';
 }
 
-function formatResetTime(isoString?: string, locale?: string): string {
+function formatResetTime(isoString?: string): string {
   if (!isoString) return '';
   try {
     const date = new Date(isoString);
@@ -59,39 +53,31 @@ function formatResetTime(isoString?: string, locale?: string): string {
       return `${minutes}m`;
     }
 
-    // Otherwise show absolute date
-    return date.toLocaleString(locale || 'en', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    // Show date format dd/mm HH:mm
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const hours = date.getHours().toString().padStart(2, '0');
+    const mins = date.getMinutes().toString().padStart(2, '0');
+    return `${day}/${month} ${hours}:${mins}`;
   } catch {
     return isoString;
   }
 }
 
-function getAvatarLetter(email: string): string {
-  if (!email) return '?';
-  return email.charAt(0).toUpperCase();
-}
-
 interface ResourceRowProps {
   quota: QuotaInfo;
-  locale?: string;
 }
 
-function ResourceRow({ quota, locale }: ResourceRowProps) {
-  const { t } = useTranslation();
+function ResourceRow({ quota }: ResourceRowProps) {
   const level = getPercentLevel(quota.remainingPercent);
-  const resetTimeStr = formatResetTime(quota.resetTime, locale);
-  const expiryTimeStr = formatResetTime(quota.expiryTime, locale);
+  const resetTimeStr = formatResetTime(quota.resetTime);
+  const expiryTimeStr = formatResetTime(quota.expiryTime);
 
   // Format usage display
   const getUsageDisplay = () => {
     if (quota.isAbsoluteValue) {
       // Show remaining/limit format (e.g., 50/50 = full, 10/50 = low)
-      const remaining = quota.limit - quota.used;
+      const remaining = Math.round((quota.limit - quota.used) * 100) / 100;
       return `${remaining}/${quota.limit}`;
     }
     return `${quota.remainingPercent.toFixed(0)}%`;
@@ -108,9 +94,7 @@ function ResourceRow({ quota, locale }: ResourceRowProps) {
           {quota.expiryTime && expiryTimeStr && (
             <span className={styles.resetTime}>
               <IconTimer size={12} />
-              <span>
-                {t('quota.expires')}: {expiryTimeStr}
-              </span>
+              <span>{expiryTimeStr}</span>
             </span>
           )}
           {!quota.expiryTime && resetTimeStr && (
@@ -133,90 +117,61 @@ function ResourceRow({ quota, locale }: ResourceRowProps) {
   );
 }
 
-interface CollapsibleGroupProps {
+interface GroupRowProps {
   group: QuotaGroup;
-  locale?: string;
-  defaultExpanded?: boolean;
 }
 
-function CollapsibleGroup({ group, locale, defaultExpanded = false }: CollapsibleGroupProps) {
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+function GroupRow({ group }: GroupRowProps) {
   const level = getPercentLevel(group.avgRemainingPercent);
-  const resetTimeStr = formatResetTime(group.earliestResetTime, locale);
+  const resetTimeStr = formatResetTime(group.earliestResetTime);
 
   return (
-    <div className={styles.collapsibleGroup}>
-      <button
-        className={styles.groupHeader}
-        onClick={() => setIsExpanded(!isExpanded)}
-        aria-expanded={isExpanded}
-      >
-        <div className={styles.groupHeaderTop}>
-          <div className={styles.groupLeft}>
-            <span className={styles.groupName}>{group.displayName}</span>
-            <span className={styles.modelCount}>({group.quotas.length})</span>
-          </div>
-          <div className={styles.groupRight}>
-            <span className={`${styles.percentage} ${styles[level]}`}>
-              {group.avgRemainingPercent.toFixed(0)}%
+    <div className={styles.resourceRow}>
+      <div className={styles.resourceInfo}>
+        <div className={styles.resourceIdentity}>
+          <span className={styles.modelName}>{group.displayName}</span>
+        </div>
+        <div className={styles.resourceMetrics}>
+          <span className={`${styles.percentage} ${styles[level]}`}>
+            {group.avgRemainingPercent.toFixed(0)}%
+          </span>
+          {resetTimeStr && (
+            <span className={styles.resetTime}>
+              <IconTimer size={12} />
+              <span>{resetTimeStr}</span>
             </span>
-            {resetTimeStr && (
-              <span className={styles.resetTime}>
-                <IconTimer size={12} />
-                <span>{resetTimeStr}</span>
-              </span>
-            )}
-            {isExpanded ? <IconChevronUp size={16} /> : <IconChevronDown size={16} />}
-          </div>
+          )}
         </div>
-        <div className={styles.progressBar}>
-          <div className={styles.progressTrack}>
-            <div
-              className={`${styles.progressFill} ${styles[level]}`}
-              style={{ width: `${Math.max(0, Math.min(100, group.avgRemainingPercent))}%` }}
-            />
-          </div>
+      </div>
+      <div className={styles.progressBar}>
+        <div className={styles.progressTrack}>
+          <div
+            className={`${styles.progressFill} ${styles[level]}`}
+            style={{ width: `${Math.max(0, Math.min(100, group.avgRemainingPercent))}%` }}
+          />
         </div>
-      </button>
-
-      {isExpanded && (
-        <div className={styles.groupContent}>
-          {group.quotas.map((quota, index) => (
-            <div key={`${quota.modelName}-${index}`} className={styles.modelRow}>
-              <span className={styles.modelName}>{quota.displayName || quota.modelName}</span>
-              <span
-                className={`${styles.modelPercent} ${styles[getPercentLevel(quota.remainingPercent)]}`}
-              >
-                {quota.remainingPercent.toFixed(0)}%
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+      </div>
     </div>
   );
 }
 
 interface AccountCardProps {
   result: QuotaResult;
-  locale?: string;
   t: (key: string, options?: Record<string, unknown>) => string;
   onRefresh?: () => void;
   refreshing?: boolean;
 }
 
-function AccountCard({ result, locale, t, onRefresh, refreshing }: AccountCardProps) {
+function AccountCard({ result, t, onRefresh, refreshing }: AccountCardProps) {
   const hasError = !!result.error;
   const hasQuotas = result.quotas.length > 0;
   const hasGroups = result.groups && result.groups.length > 0;
-  const avatarLetter = getAvatarLetter(result.email);
 
   return (
     <div className={`${styles.accountCard} ${hasError ? styles.hasError : ''}`}>
       {/* Top Header */}
       <div className={styles.cardHeader}>
         <div className={styles.cardIdentity}>
-          <div className={styles.avatar}>{avatarLetter}</div>
           <span className={styles.email}>{result.email}</span>
         </div>
         <div className={styles.cardActions}>
@@ -249,18 +204,18 @@ function AccountCard({ result, locale, t, onRefresh, refreshing }: AccountCardPr
       {/* Error State */}
       {hasError && <div className={styles.accountError}>{result.error}</div>}
 
-      {/* Resource Groups (for Antigravity with collapsible groups) */}
+      {/* Resource Groups (for Antigravity - simple rows) */}
       {hasGroups ? (
         <div className={styles.resourceList}>
           {result.groups!.map((group) => (
-            <CollapsibleGroup key={group.category} group={group} locale={locale} />
+            <GroupRow key={group.category} group={group} />
           ))}
         </div>
       ) : hasQuotas ? (
         /* Resource Rows (flat list for Kiro) */
         <div className={styles.resourceList}>
           {result.quotas.map((quota, index) => (
-            <ResourceRow key={`${quota.modelName}-${index}`} quota={quota} locale={locale} />
+            <ResourceRow key={`${quota.modelName}-${index}`} quota={quota} />
           ))}
         </div>
       ) : !hasError ? (
@@ -273,22 +228,18 @@ function AccountCard({ result, locale, t, onRefresh, refreshing }: AccountCardPr
 interface ProviderSectionProps {
   provider: QuotaProvider;
   accounts: QuotaResult[];
-  locale?: string;
   t: (key: string, options?: Record<string, unknown>) => string;
 }
 
-function ProviderSection({ provider, accounts, locale, t }: ProviderSectionProps) {
+function ProviderSection({ provider, accounts, t }: ProviderSectionProps) {
   const config = PROVIDER_CONFIG[provider];
 
   return (
     <section className={styles.section}>
       <div className={styles.sectionHeader}>
-        <div className={styles.sectionLeft}>
-          <span className={`${styles.providerIcon} ${styles[config.className]}`}>
-            {config.icon}
-          </span>
-          <h2 className={styles.providerName}>{config.name}</h2>
-        </div>
+        <span className={`${styles.providerBadge} ${styles[config.className]}`}>
+          {config.name}
+        </span>
         <span className={styles.sectionCount}>
           {accounts.length} {t('quota.accounts')}
         </span>
@@ -296,7 +247,7 @@ function ProviderSection({ provider, accounts, locale, t }: ProviderSectionProps
 
       <div className={styles.accountsList}>
         {accounts.map((result, index) => (
-          <AccountCard key={`${result.email}-${index}`} result={result} locale={locale} t={t} />
+          <AccountCard key={`${result.email}-${index}`} result={result} t={t} />
         ))}
       </div>
     </section>
@@ -319,7 +270,7 @@ export function QuotaPage() {
   }, [connectionStatus, fetchQuotas]);
 
   const handleRefresh = () => {
-    fetchQuotas();
+    fetchQuotas(true);
   };
 
   // Group quotas by provider
@@ -406,20 +357,18 @@ export function QuotaPage() {
         </div>
       )}
 
-      {hasAntigravity && (
-        <ProviderSection
-          provider="antigravity"
-          accounts={groupedQuotas.antigravity}
-          locale={i18n.language}
-          t={t}
-        />
-      )}
-
       {hasKiro && (
         <ProviderSection
           provider="kiro"
           accounts={groupedQuotas.kiro}
-          locale={i18n.language}
+          t={t}
+        />
+      )}
+
+      {hasAntigravity && (
+        <ProviderSection
+          provider="antigravity"
+          accounts={groupedQuotas.antigravity}
           t={t}
         />
       )}
