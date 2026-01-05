@@ -59,11 +59,10 @@ const PROVIDERS: { id: OAuthProvider; titleKey: string; hintKey: string; urlLabe
   { id: 'anthropic', titleKey: 'auth_login.anthropic_oauth_title', hintKey: 'auth_login.anthropic_oauth_hint', urlLabelKey: 'auth_login.anthropic_oauth_url_label', icon: iconClaude },
   { id: 'antigravity', titleKey: 'auth_login.antigravity_oauth_title', hintKey: 'auth_login.antigravity_oauth_hint', urlLabelKey: 'auth_login.antigravity_oauth_url_label', icon: iconAntigravity },
   { id: 'gemini-cli', titleKey: 'auth_login.gemini_cli_oauth_title', hintKey: 'auth_login.gemini_cli_oauth_hint', urlLabelKey: 'auth_login.gemini_cli_oauth_url_label', icon: iconGemini },
-  { id: 'qwen', titleKey: 'auth_login.qwen_oauth_title', hintKey: 'auth_login.qwen_oauth_hint', urlLabelKey: 'auth_login.qwen_oauth_url_label', icon: iconQwen },
-  { id: 'iflow', titleKey: 'auth_login.iflow_oauth_title', hintKey: 'auth_login.iflow_oauth_hint', urlLabelKey: 'auth_login.iflow_oauth_url_label', icon: iconIflow }
+  { id: 'qwen', titleKey: 'auth_login.qwen_oauth_title', hintKey: 'auth_login.qwen_oauth_hint', urlLabelKey: 'auth_login.qwen_oauth_url_label', icon: iconQwen }
 ];
 
-const CALLBACK_SUPPORTED: OAuthProvider[] = ['codex', 'anthropic', 'antigravity', 'gemini-cli', 'iflow'];
+const CALLBACK_SUPPORTED: OAuthProvider[] = ['codex', 'anthropic', 'antigravity', 'gemini-cli'];
 const getProviderI18nPrefix = (provider: OAuthProvider) => provider.replace('-', '_');
 const getAuthKey = (provider: OAuthProvider, suffix: string) =>
   `auth_login.${getProviderI18nPrefix(provider)}_${suffix}`;
@@ -131,12 +130,7 @@ export function OAuthPage() {
 
   const startAuth = async (provider: OAuthProvider) => {
     const projectId = provider === 'gemini-cli' ? (states[provider]?.projectId || '').trim() : undefined;
-    if (provider === 'gemini-cli' && !projectId) {
-      const message = t('auth_login.gemini_cli_project_id_required');
-      updateProviderState(provider, { projectIdError: message });
-      showNotification(message, 'warning');
-      return;
-    }
+    // 项目 ID 现在是可选的，如果不输入将自动选择第一个可用项目
     if (provider === 'gemini-cli') {
       updateProviderState(provider, { projectIdError: undefined });
     }
@@ -151,7 +145,7 @@ export function OAuthPage() {
     try {
       const res = await oauthApi.startAuth(
         provider,
-        provider === 'gemini-cli' ? { projectId: projectId! } : undefined
+        provider === 'gemini-cli' ? { projectId: projectId || undefined } : undefined
       );
       updateProviderState(provider, { url: res.url, state: res.state, status: 'waiting', polling: true });
       if (res.state) {
@@ -333,19 +327,21 @@ export function OAuthPage() {
               >
                 <div className="hint">{t(provider.hintKey)}</div>
                 {provider.id === 'gemini-cli' && (
-                  <Input
-                    label={t('auth_login.gemini_cli_project_id_label')}
-                    hint={t('auth_login.gemini_cli_project_id_hint')}
-                    value={state.projectId || ''}
-                    error={state.projectIdError}
-                    onChange={(e) =>
-                      updateProviderState(provider.id, {
-                        projectId: e.target.value,
-                        projectIdError: undefined
-                      })
-                    }
-                    placeholder={t('auth_login.gemini_cli_project_id_placeholder')}
-                  />
+                  <div className={styles.geminiProjectField}>
+                    <Input
+                      label={t('auth_login.gemini_cli_project_id_label')}
+                      hint={t('auth_login.gemini_cli_project_id_hint')}
+                      value={state.projectId || ''}
+                      error={state.projectIdError}
+                      onChange={(e) =>
+                        updateProviderState(provider.id, {
+                          projectId: e.target.value,
+                          projectIdError: undefined
+                        })
+                      }
+                      placeholder={t('auth_login.gemini_cli_project_id_placeholder')}
+                    />
+                  </div>
                 )}
                 {state.url && (
                   <div className={`connection-box ${styles.authUrlBox}`}>
