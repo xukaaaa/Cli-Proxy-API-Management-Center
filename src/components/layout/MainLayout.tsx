@@ -7,11 +7,13 @@ import {
   useRef,
   useState,
 } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { ToggleSwitch } from '@/components/ui/ToggleSwitch';
+import { PageTransition } from '@/components/common/PageTransition';
+import { MainRoutes } from '@/router/MainRoutes';
 import {
   IconBot,
   IconChartLine,
@@ -24,6 +26,7 @@ import {
   IconSettings,
   IconShield,
   IconSlidersHorizontal,
+  IconTimer,
 } from '@/components/ui/icons';
 import { INLINE_LOGO_JPEG } from '@/assets/logoInline';
 import {
@@ -34,6 +37,7 @@ import {
   useThemeStore,
 } from '@/stores';
 import { configApi, versionApi } from '@/services/api';
+import { triggerHeaderRefresh } from '@/hooks/useHeaderRefresh';
 
 const sidebarIcons: Record<string, ReactNode> = {
   dashboard: <IconLayoutDashboard size={18} />,
@@ -206,6 +210,7 @@ export function MainLayout() {
   const [requestLogDraft, setRequestLogDraft] = useState(false);
   const [requestLogTouched, setRequestLogTouched] = useState(false);
   const [requestLogSaving, setRequestLogSaving] = useState(false);
+  const contentRef = useRef<HTMLDivElement | null>(null);
   const brandCollapseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const headerRef = useRef<HTMLElement | null>(null);
   const versionTapCount = useRef(0);
@@ -347,6 +352,7 @@ export function MainLayout() {
     });
   }, [fetchConfig]);
 
+
   const statusClass =
     connectionStatus === 'connected'
       ? 'success'
@@ -371,15 +377,37 @@ export function MainLayout() {
       : []),
     { path: '/system', label: t('nav.system_info'), icon: sidebarIcons.system },
   ];
+  const navOrder = navItems.map((item) => item.path);
+  const getRouteOrder = (pathname: string) => {
+    const trimmedPath =
+      pathname.length > 1 && pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+    const normalizedPath = trimmedPath === '/dashboard' ? '/' : trimmedPath;
+    const exactIndex = navOrder.indexOf(normalizedPath);
+    if (exactIndex !== -1) return exactIndex;
+    const nestedIndex = navOrder.findIndex(
+      (path) => path !== '/' && normalizedPath.startsWith(`${path}/`)
+    );
+    return nestedIndex === -1 ? null : nestedIndex;
+  };
 
   const handleRefreshAll = async () => {
     clearCache();
-    try {
-      await fetchConfig(undefined, true);
-      showNotification(t('notification.data_refreshed'), 'success');
-    } catch (error: any) {
-      showNotification(`${t('notification.refresh_failed')}: ${error?.message || ''}`, 'error');
+    const results = await Promise.allSettled([
+      fetchConfig(undefined, true),
+      triggerHeaderRefresh()
+    ]);
+    const rejected = results.find((result) => result.status === 'rejected');
+    if (rejected && rejected.status === 'rejected') {
+      const reason = rejected.reason;
+      const message =
+        typeof reason === 'string' ? reason : reason instanceof Error ? reason.message : '';
+      showNotification(
+        `${t('notification.refresh_failed')}${message ? `: ${message}` : ''}`,
+        'error'
+      );
+      return;
     }
+    showNotification(t('notification.data_refreshed'), 'success');
   };
 
   const handleVersionCheck = async () => {
@@ -514,9 +542,13 @@ export function MainLayout() {
           </div>
         </aside>
 
-        <div className={`content${isLogsPage ? ' content-logs' : ''}`}>
+        <div className={`content${isLogsPage ? ' content-logs' : ''}`} ref={contentRef}>
           <main className={`main-content${isLogsPage ? ' main-content-logs' : ''}`}>
-            <Outlet />
+            <PageTransition
+              render={(location) => <MainRoutes location={location} />}
+              getRouteOrder={getRouteOrder}
+              scrollContainerRef={contentRef}
+            />
           </main>
 
           <footer className="footer">

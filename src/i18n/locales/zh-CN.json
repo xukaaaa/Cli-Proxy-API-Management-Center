@@ -63,6 +63,7 @@
     "custom_connection_placeholder": "例如: https://example.com:8317",
     "custom_connection_hint": "默认使用当前访问地址，若需要可手动输入其他地址。",
     "use_current_address": "使用当前地址",
+    "remember_password_label": "记住密码",
     "management_key_label": "管理密钥:",
     "management_key_placeholder": "请输入管理密钥",
     "connect_button": "连接",
@@ -90,6 +91,7 @@
     "ai_providers": "AI 提供商",
     "auth_files": "认证文件",
     "oauth": "OAuth 登录",
+    "quota_management": "配额管理",
     "usage_stats": "使用统计",
     "quota_check": "配额检查",
     "config_management": "配置管理",
@@ -395,6 +397,20 @@
     "plan_team": "Team",
     "plan_free": "Free"
   },
+  "gemini_cli_quota": {
+    "title": "Gemini CLI 额度",
+    "empty_title": "暂无 Gemini CLI 认证",
+    "empty_desc": "上传 Gemini CLI 认证文件后即可查看额度。",
+    "idle": "尚未加载额度，请点击刷新按钮。",
+    "loading": "正在加载额度...",
+    "load_failed": "额度获取失败：{{message}}",
+    "missing_auth_index": "认证文件缺少 auth_index",
+    "missing_project_id": "Gemini CLI 凭证缺少 Project ID",
+    "empty_buckets": "暂无额度数据",
+    "refresh_button": "刷新额度",
+    "fetch_all": "获取全部",
+    "remaining_amount": "剩余 {{count}}"
+  },
   "vertex_import": {
     "title": "Vertex JSON 登录",
     "description": "上传 Google 服务账号 JSON，使用 CLI vertex-import 同步规则写入 auth-dir/vertex-<project>.json。",
@@ -488,9 +504,9 @@
     "gemini_cli_oauth_title": "Gemini CLI OAuth",
     "gemini_cli_oauth_button": "开始 Gemini CLI 登录",
     "gemini_cli_oauth_hint": "通过 OAuth 流程登录 Google Gemini CLI 服务，自动获取并保存认证文件。",
-    "gemini_cli_project_id_label": "Google Cloud 项目 ID:",
-    "gemini_cli_project_id_placeholder": "输入 Google Cloud 项目 ID",
-    "gemini_cli_project_id_hint": "请填写项目 ID，用于 Gemini CLI OAuth 登录。",
+    "gemini_cli_project_id_label": "Google Cloud 项目 ID (可选):",
+    "gemini_cli_project_id_placeholder": "留空将自动选择第一个可用项目",
+    "gemini_cli_project_id_hint": "可选填写项目 ID。如不填写，系统将自动选择您账号下的第一个可用项目。",
     "gemini_cli_project_id_required": "请填写 Google Cloud 项目 ID。",
     "gemini_cli_oauth_url_label": "授权链接:",
     "gemini_cli_open_link": "打开链接",
@@ -693,6 +709,11 @@
     "search_prev": "上一个",
     "search_next": "下一个"
   },
+  "quota_management": {
+    "title": "配额管理",
+    "description": "集中查看 OAuth 额度与剩余情况",
+    "refresh_files": "刷新认证文件"
+  },
   "system_info": {
     "title": "管理中心信息",
     "connection_status_title": "连接状态",
@@ -728,7 +749,11 @@
     "link_webui_repo": "WebUI 仓库",
     "link_webui_repo_desc": "管理中心前端界面源代码",
     "link_docs": "使用教程",
-    "link_docs_desc": "配置指南和使用说明"
+    "link_docs_desc": "配置指南和使用说明",
+    "clear_login_title": "本地登录信息",
+    "clear_login_desc": "清理本地保存的登录信息并退出登录，不会影响使用统计中的价格设置。",
+    "clear_login_button": "清理登录信息",
+    "clear_login_confirm": "确认清理本地登录信息并退出登录？"
   },
   "notification": {
     "debug_updated": "调试设置已更新",
@@ -741,9 +766,11 @@
     "logging_to_file_updated": "日志记录设置已更新",
     "request_log_updated": "请求日志设置已更新",
     "ws_auth_updated": "WebSocket 鉴权设置已更新",
+    "login_storage_cleared": "本地登录信息已清理",
     "api_key_added": "API密钥添加成功",
     "api_key_updated": "API密钥更新成功",
     "api_key_deleted": "API密钥删除成功",
+    "api_key_invalid_chars": "API密钥仅支持英文字母、数字和符号",
     "gemini_key_added": "Gemini密钥添加成功",
     "gemini_key_updated": "Gemini密钥更新成功",
     "gemini_key_deleted": "Gemini密钥删除成功",
