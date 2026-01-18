@@ -10,7 +10,10 @@ export type OAuthProvider =
   | 'antigravity'
   | 'gemini-cli'
   | 'kimi'
-  | 'qwen';
+  | 'qwen'
+  | 'kiro';
+
+export type KiroAuthMethod = 'google' | 'github' | 'aws';
 
 export interface OAuthStartResponse {
   url: string;
@@ -30,13 +33,21 @@ export interface IFlowCookieAuthResponse {
   type?: string;
 }
 
-const WEBUI_SUPPORTED: OAuthProvider[] = ['codex', 'anthropic', 'antigravity', 'gemini-cli'];
+const WEBUI_SUPPORTED: OAuthProvider[] = ['codex', 'anthropic', 'antigravity', 'gemini-cli', 'kiro'];
 const CALLBACK_PROVIDER_MAP: Partial<Record<OAuthProvider, string>> = {
   'gemini-cli': 'gemini'
 };
 
+export interface KiroAuthStatusResponse {
+  status: 'ok' | 'wait' | 'error' | 'auth_url' | 'device_code';
+  url?: string;
+  verification_url?: string;
+  user_code?: string;
+  error?: string;
+}
+
 export const oauthApi = {
-  startAuth: (provider: OAuthProvider, options?: { projectId?: string }) => {
+  startAuth: (provider: OAuthProvider, options?: { projectId?: string; method?: KiroAuthMethod }) => {
     const params: Record<string, string | boolean> = {};
     if (WEBUI_SUPPORTED.includes(provider)) {
       params.is_webui = true;
@@ -44,13 +55,16 @@ export const oauthApi = {
     if (provider === 'gemini-cli' && options?.projectId) {
       params.project_id = options.projectId;
     }
+    if (provider === 'kiro' && options?.method) {
+      params.method = options.method;
+    }
     return apiClient.get<OAuthStartResponse>(`/${provider}-auth-url`, {
       params: Object.keys(params).length ? params : undefined
     });
   },
 
   getAuthStatus: (state: string) =>
-    apiClient.get<{ status: 'ok' | 'wait' | 'error'; error?: string }>(`/get-auth-status`, {
+    apiClient.get<KiroAuthStatusResponse>(`/get-auth-status`, {
       params: { state }
     }),
 

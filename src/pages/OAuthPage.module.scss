@@ -202,6 +202,37 @@
   border-radius: $radius-md;
 }
 
+.kiroMethodField {
+  margin-top: $spacing-md;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.kiroMethodLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.kiroMethodButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.deviceCodeValue {
+  font-size: 24px;
+  font-weight: 700;
+  font-family: monospace;
+  color: var(--text-primary);
+  letter-spacing: 2px;
+  text-align: center;
+  padding: $spacing-md;
+  background: var(--bg-tertiary);
+  border-radius: $radius-md;
+}
+
 .filePicker {
   display: flex;
   align-items: center;
