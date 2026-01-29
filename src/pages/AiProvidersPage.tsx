@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { entriesToModels } from '@/components/ui/ModelInputList';
 import {
   AmpcodeSection,
+  ClaudeCodeSection,
   ClaudeSection,
   CodexSection,
   GeminiSection,
@@ -18,7 +19,7 @@ import {
   withDisableAllModelsRule,
   withoutDisableAllModelsRule,
 } from '@/components/providers/utils';
-import { ampcodeApi, providersApi } from '@/services/api';
+import { ampcodeApi, claudecodeApi, providersApi } from '@/services/api';
 import { useAuthStore, useConfigStore, useNotificationStore, useThemeStore } from '@/stores';
 import type { GeminiKeyConfig, OpenAIProviderConfig, ProviderKeyConfig } from '@/types';
 import { buildHeaderObject, headersToEntries } from '@/utils/headers';
@@ -47,6 +48,7 @@ export function AiProvidersPage() {
   const [configSwitchingKey, setConfigSwitchingKey] = useState<string | null>(null);
   const [modal, setModal] = useState<ProviderModal | null>(null);
   const [ampcodeBusy, setAmpcodeBusy] = useState(false);
+  const [claudecodeBusy, setClaudecodeBusy] = useState(false);
 
   const disableControls = connectionStatus !== 'connected';
   const isSwitching = Boolean(configSwitchingKey);
@@ -72,6 +74,13 @@ export function AiProvidersPage() {
         const ampcode = await ampcodeApi.getAmpcode();
         updateConfigValue('ampcode', ampcode);
         clearCache('ampcode');
+      } catch {
+        // ignore
+      }
+      try {
+        const claudecode = await claudecodeApi.getClaudeCode();
+        updateConfigValue('claudecode', claudecode);
+        clearCache('claudecode');
       } catch {
         // ignore
       }
@@ -114,6 +123,10 @@ export function AiProvidersPage() {
 
   const openAmpcodeModal = () => {
     setModal({ type: 'ampcode', index: null });
+  };
+
+  const openClaudeCodeModal = () => {
+    setModal({ type: 'claudecode', index: null });
   };
 
   const openOpenaiModal = (index: number | null) => {
@@ -486,6 +499,19 @@ export function AiProvidersPage() {
           onOpen={openAmpcodeModal}
           onCloseModal={closeModal}
           onBusyChange={setAmpcodeBusy}
+        />
+
+        <ClaudeCodeSection
+          config={config?.claudecode}
+          loading={loading}
+          disableControls={disableControls}
+          isSaving={saving}
+          isSwitching={isSwitching}
+          isBusy={claudecodeBusy}
+          isModalOpen={modal?.type === 'claudecode'}
+          onOpen={openClaudeCodeModal}
+          onCloseModal={closeModal}
+          onBusyChange={setClaudecodeBusy}
         />
 
         <OpenAISection

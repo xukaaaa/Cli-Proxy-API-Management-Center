@@ -7,6 +7,7 @@ export type ProviderModal =
   | { type: 'codex'; index: number | null }
   | { type: 'claude'; index: number | null }
   | { type: 'ampcode'; index: null }
+  | { type: 'claudecode'; index: null }
   | { type: 'openai'; index: number | null };
 
 export interface ModelEntry {
@@ -27,6 +28,11 @@ export interface OpenAIFormState {
 export interface AmpcodeFormState {
   upstreamUrl: string;
   upstreamApiKey: string;
+  forceModelMappings: boolean;
+  mappingEntries: ModelEntry[];
+}
+
+export interface ClaudeCodeFormState {
   forceModelMappings: boolean;
   mappingEntries: ModelEntry[];
 }

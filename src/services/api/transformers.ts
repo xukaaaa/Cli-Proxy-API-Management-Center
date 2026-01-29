@@ -5,7 +5,9 @@ import type {
   OpenAIProviderConfig,
   ProviderKeyConfig,
   AmpcodeConfig,
-  AmpcodeModelMapping
+  AmpcodeModelMapping,
+  ClaudeCodeConfig,
+  ClaudeCodeModelMapping
 } from '@/types';
 import type { Config } from '@/types/config';
 import { buildHeaderObject } from '@/utils/headers';
@@ -234,6 +236,53 @@ const normalizeAmpcodeConfig = (payload: any): AmpcodeConfig | undefined => {
   return config;
 };
 
+const normalizeClaudeCodeModelMappings = (input: any): ClaudeCodeModelMapping[] => {
+  if (!Array.isArray(input)) return [];
+  const seen = new Set<string>();
+  const mappings: ClaudeCodeModelMapping[] = [];
+
+  input.forEach((entry) => {
+    if (!entry || typeof entry !== 'object') return;
+    const from = String(entry.from ?? entry['from'] ?? '').trim();
+    const to = String(entry.to ?? entry['to'] ?? '').trim();
+    const regex = entry.regex ?? entry['regex'];
+    if (!from || !to) return;
+    const key = from.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    const mapping: ClaudeCodeModelMapping = { from, to };
+    if (regex !== undefined && regex !== null) {
+      mapping.regex = Boolean(regex);
+    }
+    mappings.push(mapping);
+  });
+
+  return mappings;
+};
+
+const normalizeClaudeCodeConfig = (payload: any): ClaudeCodeConfig | undefined => {
+  const source = payload?.claudecode ?? payload;
+  if (!source || typeof source !== 'object') return undefined;
+
+  const config: ClaudeCodeConfig = {};
+
+  const forceModelMappings = normalizeBoolean(
+    source['force-model-mappings'] ?? source.forceModelMappings ?? source['force_model_mappings']
+  );
+  if (forceModelMappings !== undefined) {
+    config.forceModelMappings = forceModelMappings;
+  }
+
+  const modelMappings = normalizeClaudeCodeModelMappings(
+    source['model-mappings'] ?? source.modelMappings ?? source['model_mappings']
+  );
+  if (modelMappings.length) {
+    config.modelMappings = modelMappings;
+  }
+
+  return config;
+};
+
 /**
  * 规范化 /config 返回值
  */
@@ -294,6 +343,11 @@ export const normalizeConfigResponse = (raw: any): Config => {
     config.ampcode = ampcode;
   }
 
+  const claudecode = normalizeClaudeCodeConfig(raw.claudecode);
+  if (claudecode) {
+    config.claudecode = claudecode;
+  }
+
   const oauthExcluded = normalizeOauthExcluded(raw['oauth-excluded-models'] ?? raw.oauthExcludedModels);
   if (oauthExcluded) {
     config.oauthExcludedModels = oauthExcluded;
@@ -311,5 +365,7 @@ export {
   normalizeHeaders,
   normalizeExcludedModels,
   normalizeAmpcodeConfig,
-  normalizeAmpcodeModelMappings
+  normalizeAmpcodeModelMappings,
+  normalizeClaudeCodeConfig,
+  normalizeClaudeCodeModelMappings
 };

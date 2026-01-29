@@ -5,6 +5,7 @@
 
 import type { GeminiKeyConfig, ProviderKeyConfig, OpenAIProviderConfig } from './provider';
 import type { AmpcodeConfig } from './ampcode';
+import type { ClaudeCodeConfig } from './claudecode';
 
 export interface QuotaExceededConfig {
   switchProject?: boolean;
@@ -22,6 +23,7 @@ export interface Config {
   wsAuth?: boolean;
   apiKeys?: string[];
   ampcode?: AmpcodeConfig;
+  claudecode?: ClaudeCodeConfig;
   geminiApiKeys?: GeminiKeyConfig[];
   codexApiKeys?: ProviderKeyConfig[];
   claudeApiKeys?: ProviderKeyConfig[];
@@ -41,6 +43,7 @@ export type RawConfigSection =
   | 'ws-auth'
   | 'api-keys'
   | 'ampcode'
+  | 'claudecode'
   | 'gemini-api-key'
   | 'codex-api-key'
   | 'claude-api-key'
