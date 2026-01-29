@@ -2,7 +2,6 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import iconAmp from '@/assets/icons/amp.svg';
 import type { ClaudeCodeConfig } from '@/types';
-import { maskApiKey } from '@/utils/format';
 import styles from '@/pages/AiProvidersPage.module.scss';
 import { useTranslation } from 'react-i18next';
 import { ClaudeCodeModal } from './ClaudeCodeModal';
