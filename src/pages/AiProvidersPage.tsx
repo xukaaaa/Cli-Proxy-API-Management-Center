@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
   AmpcodeSection,
+  ClaudeCodeSection,
   ClaudeSection,
   CodexSection,
   GeminiSection,
@@ -16,7 +17,7 @@ import {
   withoutDisableAllModelsRule,
 } from '@/components/providers/utils';
 import { useHeaderRefresh } from '@/hooks/useHeaderRefresh';
-import { ampcodeApi, providersApi } from '@/services/api';
+import { ampcodeApi, claudecodeApi, providersApi } from '@/services/api';
 import { useAuthStore, useConfigStore, useNotificationStore, useThemeStore } from '@/stores';
 import type { GeminiKeyConfig, OpenAIProviderConfig, ProviderKeyConfig } from '@/types';
 import styles from './AiProvidersPage.module.scss';
@@ -55,6 +56,8 @@ export function AiProvidersPage() {
   );
 
   const [configSwitchingKey, setConfigSwitchingKey] = useState<string | null>(null);
+  const [claudecodeModalOpen, setClaudecodeModalOpen] = useState(false);
+  const [claudecodeBusy, setClaudecodeBusy] = useState(false);
 
   const disableControls = connectionStatus !== 'connected';
   const isSwitching = Boolean(configSwitchingKey);
@@ -100,6 +103,14 @@ export function AiProvidersPage() {
       if (ampcodeResult.status === 'fulfilled') {
         updateConfigValue('ampcode', ampcodeResult.value);
         clearCache('ampcode');
+      }
+
+      try {
+        const claudecode = await claudecodeApi.getClaudeCode();
+        updateConfigValue('claudecode', claudecode);
+        clearCache('claudecode');
+      } catch {
+        // ignore
       }
     } catch (err: unknown) {
       const message = getErrorMessage(err) || t('notification.refresh_failed');
@@ -410,6 +421,21 @@ export function AiProvidersPage() {
             disableControls={disableControls}
             isSwitching={isSwitching}
             onEdit={() => openEditor('/ai-providers/ampcode')}
+          />
+        </div>
+
+        <div id="provider-claudecode">
+          <ClaudeCodeSection
+            config={config?.claudecode}
+            loading={loading}
+            disableControls={disableControls}
+            isSaving={false}
+            isSwitching={isSwitching}
+            isBusy={claudecodeBusy}
+            isModalOpen={claudecodeModalOpen}
+            onOpen={() => setClaudecodeModalOpen(true)}
+            onCloseModal={() => setClaudecodeModalOpen(false)}
+            onBusyChange={setClaudecodeBusy}
           />
         </div>
 

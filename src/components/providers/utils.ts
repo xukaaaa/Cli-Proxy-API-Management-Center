@@ -1,6 +1,6 @@
-import type { AmpcodeConfig, AmpcodeModelMapping, ApiKeyEntry } from '@/types';
+import type { AmpcodeConfig, AmpcodeModelMapping, ClaudeCodeConfig, ClaudeCodeModelMapping, ApiKeyEntry } from '@/types';
 import { buildCandidateUsageSourceIds, type KeyStatBucket, type KeyStats } from '@/utils/usage';
-import type { AmpcodeFormState, ModelEntry } from './types';
+import type { AmpcodeFormState, ClaudeCodeFormState, ModelEntry } from './types';
 
 export const DISABLE_ALL_MODELS_RULE = '*';
 
@@ -173,4 +173,36 @@ export const buildAmpcodeFormState = (ampcode?: AmpcodeConfig | null): AmpcodeFo
   upstreamApiKey: '',
   forceModelMappings: ampcode?.forceModelMappings ?? false,
   mappingEntries: ampcodeMappingsToEntries(ampcode?.modelMappings),
+});
+
+export const claudecodeMappingsToEntries = (mappings?: ClaudeCodeModelMapping[]): ModelEntry[] => {
+  if (!Array.isArray(mappings) || mappings.length === 0) {
+    return [{ name: '', alias: '' }];
+  }
+  return mappings.map((mapping) => ({
+    name: mapping.from ?? '',
+    alias: mapping.to ?? '',
+  }));
+};
+
+export const entriesToClaudeCodeMappings = (entries: ModelEntry[]): ClaudeCodeModelMapping[] => {
+  const seen = new Set<string>();
+  const mappings: ClaudeCodeModelMapping[] = [];
+
+  entries.forEach((entry) => {
+    const from = entry.name.trim();
+    const to = entry.alias.trim();
+    if (!from || !to) return;
+    const key = from.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    mappings.push({ from, to });
+  });
+
+  return mappings;
+};
+
+export const buildClaudeCodeFormState = (claudecode?: ClaudeCodeConfig | null): ClaudeCodeFormState => ({
+  forceModelMappings: claudecode?.forceModelMappings ?? false,
+  mappingEntries: claudecodeMappingsToEntries(claudecode?.modelMappings),
 });

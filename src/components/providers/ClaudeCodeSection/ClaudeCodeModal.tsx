@@ -99,6 +99,7 @@ export function ClaudeCodeModal({ isOpen, disableControls, onClose, onBusyChange
         }
       }
 
+      const previous = config?.claudecode ?? {};
       const next: ClaudeCodeConfig = {
         forceModelMappings: form.forceModelMappings,
       };

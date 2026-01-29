@@ -2,6 +2,14 @@ import type { ApiKeyEntry, GeminiKeyConfig, ProviderKeyConfig } from '@/types';
 import type { HeaderEntry } from '@/utils/headers';
 import type { KeyStats, UsageDetail } from '@/utils/usage';
 
+export type ProviderModal =
+  | { type: 'gemini'; index: number | null }
+  | { type: 'codex'; index: number | null }
+  | { type: 'claude'; index: number | null }
+  | { type: 'ampcode'; index: null }
+  | { type: 'claudecode'; index: null }
+  | { type: 'openai'; index: number | null };
+
 export interface ModelEntry {
   name: string;
   alias: string;
@@ -21,6 +29,11 @@ export interface OpenAIFormState {
 export interface AmpcodeFormState {
   upstreamUrl: string;
   upstreamApiKey: string;
+  forceModelMappings: boolean;
+  mappingEntries: ModelEntry[];
+}
+
+export interface ClaudeCodeFormState {
   forceModelMappings: boolean;
   mappingEntries: ModelEntry[];
 }
