@@ -6,16 +6,21 @@ import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { MultiSelect } from '@/components/ui/MultiSelect';
+import { QuotaStatusDisplay } from '@/components/quotaManagement/QuotaStatusDisplay';
 import { useAuthStore, useConfigStore, useNotificationStore } from '@/stores';
-import { apiKeysApi } from '@/services/api';
+import { apiKeysApi, quotaManagementApi, modelsApi } from '@/services/api';
 import { maskApiKey } from '@/utils/format';
 import { isValidApiKeyCharset } from '@/utils/validation';
+import { validatePolicy } from '@/utils/quotaManagement';
+import type { QuotaPolicy, QuotaUsage } from '@/types/quotaManagement';
 import styles from './ApiKeysPage.module.scss';
 
 export function ApiKeysPage() {
   const { t } = useTranslation();
   const { showNotification } = useNotificationStore();
   const connectionStatus = useAuthStore((state) => state.connectionStatus);
+  const apiBase = useAuthStore((state) => state.apiBase);
 
   const config = useConfigStore((state) => state.config);
   const fetchConfig = useConfigStore((state) => state.fetchConfig);
@@ -31,6 +36,13 @@ export function ApiKeysPage() {
   const [saving, setSaving] = useState(false);
   const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
 
+  // Quota-related state
+  const [policies, setPolicies] = useState<Record<string, QuotaPolicy>>({});
+  const [usageData, setUsageData] = useState<Record<string, QuotaUsage>>({});
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [quotaFormData, setQuotaFormData] = useState<Partial<QuotaPolicy>>({});
+  const [showQuotaSection, setShowQuotaSection] = useState(false);
+
   const disableControls = useMemo(() => connectionStatus !== 'connected', [connectionStatus]);
 
   const loadApiKeys = useCallback(
@@ -38,16 +50,56 @@ export function ApiKeysPage() {
       setLoading(true);
       setError('');
       try {
+        // Load API keys first
         const result = (await fetchConfig('api-keys', force)) as string[] | undefined;
         const list = Array.isArray(result) ? result : [];
         setApiKeys(list);
+
+        // Load policies from config (backend returns "api-key-policies" in raw)
+        const policiesConfig = config?.apiKeyPolicies || config?.raw?.['api-key-policies'] || {};
+        console.log('Loading policies from config:', policiesConfig);
+        setPolicies(policiesConfig);
+
+        // Load quota usage and models in parallel (non-blocking)
+        // Use first API key for models API call if available
+        const firstApiKey = list.length > 0 ? list[0] : undefined;
+
+        Promise.allSettled([
+          quotaManagementApi.listUsage(),
+          firstApiKey ? modelsApi.fetchModelsViaApiCall(apiBase, firstApiKey) : Promise.resolve([])
+        ]).then(([usageResult, modelsResult]) => {
+          // Process usage
+          if (usageResult.status === 'fulfilled') {
+            setUsageData(usageResult.value.usage || {});
+          } else {
+            console.warn('Failed to load usage:', usageResult.reason);
+          }
+
+          // Process models
+          if (modelsResult.status === 'fulfilled') {
+            const models = modelsResult.value;
+            if (Array.isArray(models) && models.length > 0) {
+              const modelNames = models.map((m: any) => {
+                if (typeof m === 'string') return m;
+                return m.id || m.name || String(m);
+              }).filter(Boolean);
+              console.log('Loaded models:', modelNames.length, 'models');
+              setAvailableModels(modelNames);
+            } else {
+              console.log('No models returned from API');
+            }
+          } else {
+            console.warn('Failed to load models (401 or other error) - models dropdown will be empty');
+            // Don't show error to user, just leave models empty
+          }
+        });
       } catch (err: any) {
         setError(err?.message || t('notification.refresh_failed'));
       } finally {
         setLoading(false);
       }
     },
-    [fetchConfig, t]
+    [fetchConfig, apiBase, config, t]
   );
 
   useEffect(() => {
@@ -60,15 +112,51 @@ export function ApiKeysPage() {
     }
   }, [config?.apiKeys]);
 
+  // Sync policies from config
+  useEffect(() => {
+    // Backend returns "api-key-policies" (kebab-case), not "apiKeyPolicies" (camelCase)
+    const policiesFromConfig = config?.apiKeyPolicies || config?.raw?.['api-key-policies'] || {};
+    console.log('Syncing policies from config:', policiesFromConfig);
+    setPolicies(policiesFromConfig);
+  }, [config?.apiKeyPolicies, config?.raw]);
+
   const openAddModal = () => {
     setEditingIndex(null);
     setInputValue('');
+    setQuotaFormData({});
+    setShowQuotaSection(false);
     setModalOpen(true);
   };
 
-  const openEditModal = (index: number) => {
+  const openEditModal = async (index: number) => {
     setEditingIndex(index);
-    setInputValue(apiKeys[index] ?? '');
+    const key = apiKeys[index] ?? '';
+    setInputValue(key);
+
+    // Try to load existing policy from state first
+    let existingPolicy = policies[key];
+
+    // If not in state, fetch from API
+    if (!existingPolicy && key) {
+      try {
+        const response = await quotaManagementApi.getPolicy(key);
+        existingPolicy = response.policy;
+        // Update state with fetched policy
+        setPolicies(prev => ({ ...prev, [key]: existingPolicy! }));
+      } catch (err) {
+        console.log('No existing policy for this key');
+      }
+    }
+
+    if (existingPolicy) {
+      console.log('Loading existing policy:', existingPolicy);
+      setQuotaFormData(existingPolicy);
+      setShowQuotaSection(true);
+    } else {
+      setQuotaFormData({});
+      setShowQuotaSection(false);
+    }
+
     setModalOpen(true);
   };
 
@@ -76,6 +164,8 @@ export function ApiKeysPage() {
     setModalOpen(false);
     setInputValue('');
     setEditingIndex(null);
+    setQuotaFormData({});
+    setShowQuotaSection(false);
   };
 
   const handleSave = async () => {
@@ -89,6 +179,15 @@ export function ApiKeysPage() {
       return;
     }
 
+    // Validate quota policy if quota section is shown
+    if (showQuotaSection) {
+      const validationError = validatePolicy(quotaFormData);
+      if (validationError) {
+        showNotification(validationError, 'error');
+        return;
+      }
+    }
+
     const isEdit = editingIndex !== null;
     const nextKeys = isEdit
       ? apiKeys.map((key, idx) => (idx === editingIndex ? trimmed : key))
@@ -96,6 +195,7 @@ export function ApiKeysPage() {
 
     setSaving(true);
     try {
+      // Save API key
       if (isEdit && editingIndex !== null) {
         await apiKeysApi.update(editingIndex, trimmed);
         showNotification(t('notification.api_key_updated'), 'success');
@@ -104,9 +204,23 @@ export function ApiKeysPage() {
         showNotification(t('notification.api_key_added'), 'success');
       }
 
+      // Save quota policy if provided
+      if (showQuotaSection && Object.keys(quotaFormData).length > 0) {
+        try {
+          await quotaManagementApi.createOrUpdatePolicy(trimmed, quotaFormData as QuotaPolicy);
+          showNotification(t('api_keys.policy_saved'), 'success');
+        } catch (err: any) {
+          showNotification(`Policy save failed: ${err?.message || ''}`, 'error');
+        }
+      }
+
       setApiKeys(nextKeys);
       updateConfigValue('api-keys', nextKeys);
       clearCache('api-keys');
+
+      // Reload to get updated quota data
+      await loadApiKeys(true);
+
       closeModal();
     } catch (err: any) {
       showNotification(`${t('notification.update_failed')}: ${err?.message || ''}`, 'error');
@@ -118,17 +232,57 @@ export function ApiKeysPage() {
   const handleDelete = async (index: number) => {
     if (!window.confirm(t('api_keys.delete_confirm'))) return;
     setDeletingIndex(index);
+    const keyToDelete = apiKeys[index];
     try {
       await apiKeysApi.delete(index);
       const nextKeys = apiKeys.filter((_, idx) => idx !== index);
       setApiKeys(nextKeys);
       updateConfigValue('api-keys', nextKeys);
       clearCache('api-keys');
+
+      // Also delete quota policy if exists
+      if (policies[keyToDelete]) {
+        try {
+          await quotaManagementApi.deletePolicy(keyToDelete);
+        } catch (err) {
+          // Ignore policy deletion errors
+        }
+      }
+
       showNotification(t('notification.api_key_deleted'), 'success');
+
+      // Reload to get updated quota data
+      await loadApiKeys(true);
     } catch (err: any) {
       showNotification(`${t('notification.delete_failed')}: ${err?.message || ''}`, 'error');
     } finally {
       setDeletingIndex(null);
+    }
+  };
+
+  const handleDeletePolicy = async (apiKey: string) => {
+    if (!window.confirm(t('api_keys.delete_policy_confirm'))) return;
+    try {
+      await quotaManagementApi.deletePolicy(apiKey);
+      showNotification(t('api_keys.policy_deleted'), 'success');
+      await loadApiKeys(true);
+    } catch (err: any) {
+      showNotification(`Policy delete failed: ${err?.message || ''}`, 'error');
+    }
+  };
+
+  const handleAddPolicy = async (apiKey: string) => {
+    const index = apiKeys.indexOf(apiKey);
+    if (index !== -1) {
+      await openEditModal(index);
+      setShowQuotaSection(true);
+    }
+  };
+
+  const handleEditPolicy = async (apiKey: string) => {
+    const index = apiKeys.indexOf(apiKey);
+    if (index !== -1) {
+      await openEditModal(index);
     }
   };
 
@@ -168,25 +322,37 @@ export function ApiKeysPage() {
           <div className="item-list">
             {apiKeys.map((key, index) => (
               <div key={index} className="item-row">
-                <div className="item-meta">
-                  <div className="pill">#{index + 1}</div>
-                  <div className="item-title">{t('api_keys.item_title')}</div>
-                  <div className="item-subtitle">{maskApiKey(String(key || ''))}</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '16px' }}>
+                  <div className="item-meta">
+                    <div className="pill">#{index + 1}</div>
+                    <div className="item-title">{t('api_keys.item_title')}</div>
+                    <div className="item-subtitle">{maskApiKey(String(key || ''))}</div>
+                  </div>
+                  <div className="item-actions">
+                    <Button variant="secondary" size="sm" onClick={() => openEditModal(index)} disabled={disableControls}>
+                      {t('common.edit')}
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => handleDelete(index)}
+                      disabled={disableControls || deletingIndex === index}
+                      loading={deletingIndex === index}
+                    >
+                      {t('common.delete')}
+                    </Button>
+                  </div>
                 </div>
-                <div className="item-actions">
-                  <Button variant="secondary" size="sm" onClick={() => openEditModal(index)} disabled={disableControls}>
-                    {t('common.edit')}
-                  </Button>
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={() => handleDelete(index)}
-                    disabled={disableControls || deletingIndex === index}
-                    loading={deletingIndex === index}
-                  >
-                    {t('common.delete')}
-                  </Button>
-                </div>
+
+                {/* Quota Status Display - Full width */}
+                <QuotaStatusDisplay
+                  apiKey={key}
+                  policy={policies[key]}
+                  usage={usageData[key]}
+                  onEditPolicy={() => handleEditPolicy(key)}
+                  onDeletePolicy={() => handleDeletePolicy(key)}
+                  onAddPolicy={() => handleAddPolicy(key)}
+                />
               </div>
             ))}
           </div>
@@ -220,6 +386,73 @@ export function ApiKeysPage() {
             onChange={(e) => setInputValue(e.target.value)}
             disabled={saving}
           />
+
+          {/* Quota Policy Section */}
+          <div className={styles.quotaSectionToggle} onClick={() => setShowQuotaSection(!showQuotaSection)}>
+            <input type="checkbox" checked={showQuotaSection} onChange={() => {}} />
+            <span>{t('api_keys.quota_section_title')}</span>
+          </div>
+
+          {showQuotaSection && (
+            <div className={styles.quotaFields}>
+              <Input
+                label={t('api_keys.policy_name')}
+                placeholder={t('api_keys.policy_name_placeholder')}
+                value={quotaFormData.name || ''}
+                onChange={(e) => setQuotaFormData({ ...quotaFormData, name: e.target.value })}
+                disabled={saving}
+              />
+
+              <MultiSelect
+                label={t('api_keys.allowed_models')}
+                options={availableModels}
+                value={quotaFormData.allowed_models || []}
+                onChange={(selected) => setQuotaFormData({ ...quotaFormData, allowed_models: selected })}
+                placeholder={t('api_keys.allowed_models_placeholder')}
+                disabled={saving}
+              />
+
+              <div className={styles.fieldRow}>
+                <Input
+                  label={t('api_keys.max_tokens')}
+                  type="number"
+                  placeholder={t('api_keys.max_tokens_placeholder')}
+                  value={quotaFormData.max_tokens?.toString() || ''}
+                  onChange={(e) =>
+                    setQuotaFormData({
+                      ...quotaFormData,
+                      max_tokens: e.target.value ? parseInt(e.target.value, 10) : undefined
+                    })
+                  }
+                  disabled={saving}
+                />
+
+                <Input
+                  label={t('api_keys.max_cost')}
+                  type="number"
+                  step="0.01"
+                  placeholder={t('api_keys.max_cost_placeholder')}
+                  value={quotaFormData.max_cost_usd?.toString() || ''}
+                  onChange={(e) =>
+                    setQuotaFormData({
+                      ...quotaFormData,
+                      max_cost_usd: e.target.value ? parseFloat(e.target.value) : undefined
+                    })
+                  }
+                  disabled={saving}
+                />
+              </div>
+
+              <Input
+                label={t('api_keys.expires_at')}
+                type="date"
+                placeholder={t('api_keys.expires_at_placeholder')}
+                value={quotaFormData.expires_at || ''}
+                onChange={(e) => setQuotaFormData({ ...quotaFormData, expires_at: e.target.value })}
+                disabled={saving}
+              />
+            </div>
+          )}
         </Modal>
       </Card>
     </div>

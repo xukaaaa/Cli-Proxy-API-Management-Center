@@ -6,6 +6,7 @@
 import type { GeminiKeyConfig, ProviderKeyConfig, OpenAIProviderConfig } from './provider';
 import type { AmpcodeConfig } from './ampcode';
 import type { ClaudeCodeConfig } from './claudecode';
+import type { QuotaPolicy } from './quotaManagement';
 
 export interface QuotaExceededConfig {
   switchProject?: boolean;
@@ -22,6 +23,7 @@ export interface Config {
   loggingToFile?: boolean;
   wsAuth?: boolean;
   apiKeys?: string[];
+  apiKeyPolicies?: Record<string, QuotaPolicy>;
   ampcode?: AmpcodeConfig;
   claudecode?: ClaudeCodeConfig;
   geminiApiKeys?: GeminiKeyConfig[];
