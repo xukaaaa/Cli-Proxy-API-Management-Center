@@ -433,6 +433,19 @@ export function AiProvidersPage() {
       <div className={styles.content}>
         {error && <div className="error-box">{error}</div>}
 
+        <ClaudeCodeSection
+          config={config?.claudecode}
+          loading={loading}
+          disableControls={disableControls}
+          isSaving={saving}
+          isSwitching={isSwitching}
+          isBusy={claudecodeBusy}
+          isModalOpen={modal?.type === 'claudecode'}
+          onOpen={openClaudeCodeModal}
+          onCloseModal={closeModal}
+          onBusyChange={setClaudecodeBusy}
+        />
+
         <GeminiSection
           configs={geminiKeys}
           keyStats={keyStats}
@@ -499,19 +512,6 @@ export function AiProvidersPage() {
           onOpen={openAmpcodeModal}
           onCloseModal={closeModal}
           onBusyChange={setAmpcodeBusy}
-        />
-
-        <ClaudeCodeSection
-          config={config?.claudecode}
-          loading={loading}
-          disableControls={disableControls}
-          isSaving={saving}
-          isSwitching={isSwitching}
-          isBusy={claudecodeBusy}
-          isModalOpen={modal?.type === 'claudecode'}
-          onOpen={openClaudeCodeModal}
-          onCloseModal={closeModal}
-          onBusyChange={setClaudecodeBusy}
         />
 
         <OpenAISection
