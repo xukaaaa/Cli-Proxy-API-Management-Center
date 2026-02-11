@@ -6,6 +6,7 @@ import type { ModelAlias } from '@/types';
 interface ModelEntry {
   name: string;
   alias: string;
+  thinkingBudget?: string;
 }
 
 interface ModelInputListProps {
@@ -15,6 +16,12 @@ interface ModelInputListProps {
   disabled?: boolean;
   namePlaceholder?: string;
   aliasPlaceholder?: string;
+  aliasInputMode?: 'text' | 'select';
+  aliasOptions?: string[];
+  aliasEmptyOptionLabel?: string;
+  showThinkingBudgetSelect?: boolean;
+  thinkingBudgetOptions?: string[];
+  thinkingBudgetPlaceholder?: string;
 }
 
 export const modelsToEntries = (models?: ModelAlias[]): ModelEntry[] => {
@@ -23,7 +30,8 @@ export const modelsToEntries = (models?: ModelAlias[]): ModelEntry[] => {
   }
   return models.map((m) => ({
     name: m.name || '',
-    alias: m.alias || ''
+    alias: m.alias || '',
+    thinkingBudget: m.thinkingBudget || ''
   }));
 };
 
@@ -36,6 +44,10 @@ export const entriesToModels = (entries: ModelEntry[]): ModelAlias[] => {
       if (alias && alias !== model.name) {
         model.alias = alias;
       }
+      const thinkingBudget = entry.thinkingBudget?.trim();
+      if (thinkingBudget) {
+        model.thinkingBudget = thinkingBudget;
+      }
       return model;
     });
 };
@@ -46,29 +58,35 @@ export function ModelInputList({
   addLabel,
   disabled = false,
   namePlaceholder = 'model-name',
-  aliasPlaceholder = 'alias (optional)'
+  aliasPlaceholder = 'alias (optional)',
+  aliasInputMode = 'text',
+  aliasOptions = [],
+  aliasEmptyOptionLabel,
+  showThinkingBudgetSelect = false,
+  thinkingBudgetOptions = ['minimal', 'low', 'medium', 'high', 'xhigh', 'auto', 'none', '512', '1024', '8192', '24576', '32768'],
+  thinkingBudgetPlaceholder = 'thinking'
 }: ModelInputListProps) {
-  const currentEntries = entries.length ? entries : [{ name: '', alias: '' }];
+  const currentEntries = entries.length ? entries : [{ name: '', alias: '', thinkingBudget: '' }];
 
-  const updateEntry = (index: number, field: 'name' | 'alias', value: string) => {
+  const updateEntry = (index: number, field: 'name' | 'alias' | 'thinkingBudget', value: string) => {
     const next = currentEntries.map((entry, idx) => (idx === index ? { ...entry, [field]: value } : entry));
     onChange(next);
   };
 
   const addEntry = () => {
-    onChange([...currentEntries, { name: '', alias: '' }]);
+    onChange([...currentEntries, { name: '', alias: '', thinkingBudget: '' }]);
   };
 
   const removeEntry = (index: number) => {
     const next = currentEntries.filter((_, idx) => idx !== index);
-    onChange(next.length ? next : [{ name: '', alias: '' }]);
+    onChange(next.length ? next : [{ name: '', alias: '', thinkingBudget: '' }]);
   };
 
   return (
     <div className="header-input-list">
       {currentEntries.map((entry, index) => (
         <Fragment key={index}>
-          <div className="header-input-row">
+          <div className={`header-input-row ${showThinkingBudgetSelect ? 'header-input-row--with-thinking' : ''}`}>
             <input
               className="input"
               placeholder={namePlaceholder}
@@ -77,13 +95,52 @@ export function ModelInputList({
               disabled={disabled}
             />
             <span className="header-separator">→</span>
-            <input
-              className="input"
-              placeholder={aliasPlaceholder}
-              value={entry.alias}
-              onChange={(e) => updateEntry(index, 'alias', e.target.value)}
-              disabled={disabled}
-            />
+            {aliasInputMode === 'select' ? (
+              <select
+                className="input"
+                value={entry.alias}
+                onChange={(e) => updateEntry(index, 'alias', e.target.value)}
+                disabled={disabled}
+              >
+                <option value="">{aliasEmptyOptionLabel ?? aliasPlaceholder}</option>
+                {(entry.alias && !aliasOptions.includes(entry.alias)
+                  ? [...aliasOptions, entry.alias]
+                  : aliasOptions
+                ).map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                className="input"
+                placeholder={aliasPlaceholder}
+                value={entry.alias}
+                onChange={(e) => updateEntry(index, 'alias', e.target.value)}
+                disabled={disabled}
+              />
+            )}
+            {showThinkingBudgetSelect ? (
+              <select
+                className="input"
+                value={entry.thinkingBudget ?? ''}
+                onChange={(e) => updateEntry(index, 'thinkingBudget', e.target.value)}
+                disabled={disabled}
+              >
+                <option value="">{thinkingBudgetPlaceholder}</option>
+                {((entry.thinkingBudget ?? '') && !thinkingBudgetOptions.includes(entry.thinkingBudget ?? '')
+                  ? [...thinkingBudgetOptions, entry.thinkingBudget ?? '']
+                  : thinkingBudgetOptions
+                )
+                  .filter(Boolean)
+                  .map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+              </select>
+            ) : null}
             <Button
               variant="ghost"
               size="sm"
