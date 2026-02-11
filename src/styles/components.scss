@@ -577,6 +577,14 @@ textarea {
     grid-template-columns: 1fr auto 1fr auto;
     align-items: center;
     gap: $spacing-sm;
+
+    > .input {
+      min-width: 0;
+    }
+  }
+
+  .header-input-row--with-thinking {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) minmax(96px, 0.8fr) auto;
   }
 
   .header-separator {

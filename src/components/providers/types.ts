@@ -13,6 +13,7 @@ export type ProviderModal =
 export interface ModelEntry {
   name: string;
   alias: string;
+  thinkingBudget?: string;
 }
 
 export interface OpenAIFormState {

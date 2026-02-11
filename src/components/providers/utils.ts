@@ -175,14 +175,64 @@ export const buildAmpcodeFormState = (ampcode?: AmpcodeConfig | null): AmpcodeFo
   mappingEntries: ampcodeMappingsToEntries(ampcode?.modelMappings),
 });
 
+const THINKING_BUDGET_LEVELS = new Set(['minimal', 'low', 'medium', 'high', 'xhigh', 'auto', 'none']);
+
+const parseThinkingBudgetFromModel = (value: string) => {
+  const trimmed = String(value ?? '').trim();
+  if (!trimmed) return { model: '', thinkingBudget: '' };
+
+  const match = trimmed.match(/^(.*)\(([^()]*)\)\s*$/);
+  if (!match) return { model: trimmed, thinkingBudget: '' };
+
+  const model = match[1]?.trim() ?? '';
+  const rawBudget = match[2]?.trim() ?? '';
+  if (!model || !rawBudget) {
+    return { model: trimmed, thinkingBudget: '' };
+  }
+
+  const normalizedBudget = rawBudget.toLowerCase();
+  if (THINKING_BUDGET_LEVELS.has(normalizedBudget)) {
+    return { model, thinkingBudget: normalizedBudget };
+  }
+
+  if (/^\d+$/.test(rawBudget)) {
+    return { model, thinkingBudget: rawBudget };
+  }
+
+  return { model: trimmed, thinkingBudget: '' };
+};
+
+const appendThinkingBudgetToModel = (value: string, thinkingBudget?: string) => {
+  const model = value.trim();
+  if (!model) return '';
+
+  const rawBudget = String(thinkingBudget ?? '').trim();
+  if (!rawBudget) return model;
+
+  const normalizedBudget = rawBudget.toLowerCase();
+  if (THINKING_BUDGET_LEVELS.has(normalizedBudget)) {
+    return `${model}(${normalizedBudget})`;
+  }
+
+  if (/^\d+$/.test(rawBudget)) {
+    return `${model}(${rawBudget})`;
+  }
+
+  return model;
+};
+
 export const claudecodeMappingsToEntries = (mappings?: ClaudeCodeModelMapping[]): ModelEntry[] => {
   if (!Array.isArray(mappings) || mappings.length === 0) {
-    return [{ name: '', alias: '' }];
+    return [{ name: '', alias: '', thinkingBudget: '' }];
   }
-  return mappings.map((mapping) => ({
-    name: mapping.from ?? '',
-    alias: mapping.to ?? '',
-  }));
+  return mappings.map((mapping) => {
+    const parsed = parseThinkingBudgetFromModel(mapping.to ?? '');
+    return {
+      name: mapping.from ?? '',
+      alias: parsed.model,
+      thinkingBudget: parsed.thinkingBudget,
+    };
+  });
 };
 
 export const entriesToClaudeCodeMappings = (entries: ModelEntry[]): ClaudeCodeModelMapping[] => {
@@ -191,7 +241,7 @@ export const entriesToClaudeCodeMappings = (entries: ModelEntry[]): ClaudeCodeMo
 
   entries.forEach((entry) => {
     const from = entry.name.trim();
-    const to = entry.alias.trim();
+    const to = appendThinkingBudgetToModel(entry.alias, entry.thinkingBudget);
     if (!from || !to) return;
     const key = from.toLowerCase();
     if (seen.has(key)) return;
