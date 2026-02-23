@@ -35,7 +35,7 @@ interface ModelInputListProps {
 
 export const modelsToEntries = (models?: ModelAlias[]): ModelEntry[] => {
   if (!Array.isArray(models) || models.length === 0) {
-    return [{ name: '', alias: '' }];
+    return [{ name: '', alias: '', thinkingBudget: '' }];
   }
   return models.map((m) => ({
     name: m.name || '',
@@ -62,6 +62,7 @@ export const entriesToModels = (entries: ModelEntry[]): ModelAlias[] => {
 };
 
 export { type ModelEntry };
+
 export function ModelInputList({
   entries,
   onChange,
