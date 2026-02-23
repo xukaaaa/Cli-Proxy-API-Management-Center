@@ -7,13 +7,16 @@ import iconOpenaiLight from '@/assets/icons/openai-light.svg';
 import iconOpenaiDark from '@/assets/icons/openai-dark.svg';
 import type { OpenAIProviderConfig } from '@/types';
 import { maskApiKey } from '@/utils/format';
-import { calculateStatusBarData, type KeyStats, type UsageDetail } from '@/utils/usage';
+import {
+  buildCandidateUsageSourceIds,
+  calculateStatusBarData,
+  type KeyStats,
+  type UsageDetail,
+} from '@/utils/usage';
 import styles from '@/pages/AiProvidersPage.module.scss';
 import { ProviderList } from '../ProviderList';
 import { ProviderStatusBar } from '../ProviderStatusBar';
 import { getOpenAIProviderStats, getStatsBySource } from '../utils';
-import type { OpenAIFormState } from '../types';
-import { OpenAIModal } from './OpenAIModal';
 
 interface OpenAISectionProps {
   configs: OpenAIProviderConfig[];
@@ -21,16 +24,11 @@ interface OpenAISectionProps {
   usageDetails: UsageDetail[];
   loading: boolean;
   disableControls: boolean;
-  isSaving: boolean;
   isSwitching: boolean;
   resolvedTheme: string;
-  isModalOpen: boolean;
-  modalIndex: number | null;
   onAdd: () => void;
   onEdit: (index: number) => void;
   onDelete: (index: number) => void;
-  onCloseModal: () => void;
-  onSave: (data: OpenAIFormState, index: number | null) => Promise<void>;
 }
 
 export function OpenAISection({
@@ -39,33 +37,33 @@ export function OpenAISection({
   usageDetails,
   loading,
   disableControls,
-  isSaving,
   isSwitching,
   resolvedTheme,
-  isModalOpen,
-  modalIndex,
   onAdd,
   onEdit,
   onDelete,
-  onCloseModal,
-  onSave,
 }: OpenAISectionProps) {
   const { t } = useTranslation();
-  const actionsDisabled = disableControls || isSaving || isSwitching;
+  const actionsDisabled = disableControls || loading || isSwitching;
 
   const statusBarCache = useMemo(() => {
     const cache = new Map<string, ReturnType<typeof calculateStatusBarData>>();
 
     configs.forEach((provider) => {
-      const allKeys = (provider.apiKeyEntries || []).map((entry) => entry.apiKey).filter(Boolean);
-      const filteredDetails = usageDetails.filter((detail) => allKeys.includes(detail.source));
+      const sourceIds = new Set<string>();
+      buildCandidateUsageSourceIds({ prefix: provider.prefix }).forEach((id) => sourceIds.add(id));
+      (provider.apiKeyEntries || []).forEach((entry) => {
+        buildCandidateUsageSourceIds({ apiKey: entry.apiKey }).forEach((id) => sourceIds.add(id));
+      });
+
+      const filteredDetails = sourceIds.size
+        ? usageDetails.filter((detail) => sourceIds.has(detail.source))
+        : [];
       cache.set(provider.name, calculateStatusBarData(filteredDetails));
     });
 
     return cache;
   }, [configs, usageDetails]);
-
-  const initialData = modalIndex !== null ? configs[modalIndex] : undefined;
 
   return (
     <>
@@ -89,14 +87,14 @@ export function OpenAISection({
         <ProviderList<OpenAIProviderConfig>
           items={configs}
           loading={loading}
-          keyField={(item) => item.name}
+          keyField={(_, index) => `openai-provider-${index}`}
           emptyTitle={t('ai_providers.openai_empty_title')}
           emptyDescription={t('ai_providers.openai_empty_desc')}
           onEdit={onEdit}
           onDelete={onDelete}
           actionsDisabled={actionsDisabled}
           renderContent={(item) => {
-            const stats = getOpenAIProviderStats(item.apiKeyEntries, keyStats, maskApiKey);
+            const stats = getOpenAIProviderStats(item.apiKeyEntries, keyStats, item.prefix);
             const headerEntries = Object.entries(item.headers || {});
             const apiKeyEntries = item.apiKeyEntries || [];
             const statusData = statusBarCache.get(item.name) || calculateStatusBarData([]);
@@ -104,6 +102,12 @@ export function OpenAISection({
             return (
               <Fragment>
                 <div className="item-title">{item.name}</div>
+                {item.priority !== undefined && (
+                  <div className={styles.fieldRow}>
+                    <span className={styles.fieldLabel}>{t('common.priority')}:</span>
+                    <span className={styles.fieldValue}>{item.priority}</span>
+                  </div>
+                )}
                 {item.prefix && (
                   <div className={styles.fieldRow}>
                     <span className={styles.fieldLabel}>{t('common.prefix')}:</span>
@@ -130,7 +134,7 @@ export function OpenAISection({
                     </div>
                     <div className={styles.apiKeyEntryList}>
                       {apiKeyEntries.map((entry, entryIndex) => {
-                        const entryStats = getStatsBySource(entry.apiKey, keyStats, maskApiKey);
+                        const entryStats = getStatsBySource(entry.apiKey, keyStats);
                         return (
                           <div key={entryIndex} className={styles.apiKeyEntryCard}>
                             <span className={styles.apiKeyEntryIndex}>{entryIndex + 1}</span>
@@ -192,15 +196,6 @@ export function OpenAISection({
           }}
         />
       </Card>
-
-      <OpenAIModal
-        isOpen={isModalOpen}
-        editIndex={modalIndex}
-        initialData={initialData}
-        onClose={onCloseModal}
-        onSave={onSave}
-        isSaving={isSaving}
-      />
     </>
   );
 }

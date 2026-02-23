@@ -3,17 +3,20 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ToggleSwitch } from '@/components/ui/ToggleSwitch';
-import iconOpenaiLight from '@/assets/icons/openai-light.svg';
-import iconOpenaiDark from '@/assets/icons/openai-dark.svg';
+import iconCodexLight from '@/assets/icons/codex_light.svg';
+import iconCodexDark from '@/assets/icons/codex_drak.svg';
 import type { ProviderKeyConfig } from '@/types';
 import { maskApiKey } from '@/utils/format';
-import { calculateStatusBarData, type KeyStats, type UsageDetail } from '@/utils/usage';
+import {
+  buildCandidateUsageSourceIds,
+  calculateStatusBarData,
+  type KeyStats,
+  type UsageDetail,
+} from '@/utils/usage';
 import styles from '@/pages/AiProvidersPage.module.scss';
 import { ProviderList } from '../ProviderList';
 import { ProviderStatusBar } from '../ProviderStatusBar';
 import { getStatsBySource, hasDisableAllModelsRule } from '../utils';
-import type { ProviderFormState } from '../types';
-import { CodexModal } from './CodexModal';
 
 interface CodexSectionProps {
   configs: ProviderKeyConfig[];
@@ -21,17 +24,12 @@ interface CodexSectionProps {
   usageDetails: UsageDetail[];
   loading: boolean;
   disableControls: boolean;
-  isSaving: boolean;
   isSwitching: boolean;
   resolvedTheme: string;
-  isModalOpen: boolean;
-  modalIndex: number | null;
   onAdd: () => void;
   onEdit: (index: number) => void;
   onDelete: (index: number) => void;
   onToggle: (index: number, enabled: boolean) => void;
-  onCloseModal: () => void;
-  onSave: (data: ProviderFormState, index: number | null) => Promise<void>;
 }
 
 export function CodexSection({
@@ -40,33 +38,34 @@ export function CodexSection({
   usageDetails,
   loading,
   disableControls,
-  isSaving,
   isSwitching,
   resolvedTheme,
-  isModalOpen,
-  modalIndex,
   onAdd,
   onEdit,
   onDelete,
   onToggle,
-  onCloseModal,
-  onSave,
 }: CodexSectionProps) {
   const { t } = useTranslation();
-  const actionsDisabled = disableControls || isSaving || isSwitching;
-  const toggleDisabled = disableControls || loading || isSaving || isSwitching;
+  const actionsDisabled = disableControls || loading || isSwitching;
+  const toggleDisabled = disableControls || loading || isSwitching;
 
   const statusBarCache = useMemo(() => {
     const cache = new Map<string, ReturnType<typeof calculateStatusBarData>>();
-    const allApiKeys = new Set<string>();
-    configs.forEach((config) => config.apiKey && allApiKeys.add(config.apiKey));
-    allApiKeys.forEach((apiKey) => {
-      cache.set(apiKey, calculateStatusBarData(usageDetails, apiKey));
+
+    configs.forEach((config) => {
+      if (!config.apiKey) return;
+      const candidates = buildCandidateUsageSourceIds({
+        apiKey: config.apiKey,
+        prefix: config.prefix,
+      });
+      if (!candidates.length) return;
+      const candidateSet = new Set(candidates);
+      const filteredDetails = usageDetails.filter((detail) => candidateSet.has(detail.source));
+      cache.set(config.apiKey, calculateStatusBarData(filteredDetails));
     });
+
     return cache;
   }, [configs, usageDetails]);
-
-  const initialData = modalIndex !== null ? configs[modalIndex] : undefined;
 
   return (
     <>
@@ -74,7 +73,7 @@ export function CodexSection({
         title={
           <span className={styles.cardTitle}>
             <img
-              src={resolvedTheme === 'dark' ? iconOpenaiDark : iconOpenaiLight}
+              src={resolvedTheme === 'dark' ? iconCodexDark : iconCodexLight}
               alt=""
               className={styles.cardTitleIcon}
             />
@@ -106,12 +105,11 @@ export function CodexSection({
             />
           )}
           renderContent={(item) => {
-            const stats = getStatsBySource(item.apiKey, keyStats, maskApiKey);
+            const stats = getStatsBySource(item.apiKey, keyStats, item.prefix);
             const headerEntries = Object.entries(item.headers || {});
             const configDisabled = hasDisableAllModelsRule(item.excludedModels);
             const excludedModels = item.excludedModels ?? [];
-            const statusData =
-              statusBarCache.get(item.apiKey) || calculateStatusBarData([], item.apiKey);
+            const statusData = statusBarCache.get(item.apiKey) || calculateStatusBarData([]);
 
             return (
               <Fragment>
@@ -120,6 +118,12 @@ export function CodexSection({
                   <span className={styles.fieldLabel}>{t('common.api_key')}:</span>
                   <span className={styles.fieldValue}>{maskApiKey(item.apiKey)}</span>
                 </div>
+                {item.priority !== undefined && (
+                  <div className={styles.fieldRow}>
+                    <span className={styles.fieldLabel}>{t('common.priority')}:</span>
+                    <span className={styles.fieldValue}>{item.priority}</span>
+                  </div>
+                )}
                 {item.prefix && (
                   <div className={styles.fieldRow}>
                     <span className={styles.fieldLabel}>{t('common.prefix')}:</span>
@@ -138,6 +142,12 @@ export function CodexSection({
                     <span className={styles.fieldValue}>{item.proxyUrl}</span>
                   </div>
                 )}
+                {item.websockets !== undefined && (
+                  <div className={styles.fieldRow}>
+                    <span className={styles.fieldLabel}>{t('ai_providers.codex_websockets_label')}:</span>
+                    <span className={styles.fieldValue}>{item.websockets ? t('common.yes') : t('common.no')}</span>
+                  </div>
+                )}
                 {headerEntries.length > 0 && (
                   <div className={styles.headerBadgeList}>
                     {headerEntries.map(([key, value]) => (
@@ -152,6 +162,21 @@ export function CodexSection({
                     {t('ai_providers.config_disabled_badge')}
                   </div>
                 )}
+                {item.models?.length ? (
+                  <div className={styles.modelTagList}>
+                    <span className={styles.modelCountLabel}>
+                      {t('ai_providers.codex_models_count')}: {item.models.length}
+                    </span>
+                    {item.models.map((model) => (
+                      <span key={model.name} className={styles.modelTag}>
+                        <span className={styles.modelName}>{model.name}</span>
+                        {model.alias && model.alias !== model.name && (
+                          <span className={styles.modelAlias}>{model.alias}</span>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
                 {excludedModels.length ? (
                   <div className={styles.excludedModelsSection}>
                     <div className={styles.excludedModelsLabel}>
@@ -180,15 +205,6 @@ export function CodexSection({
           }}
         />
       </Card>
-
-      <CodexModal
-        isOpen={isModalOpen}
-        editIndex={modalIndex}
-        initialData={initialData}
-        onClose={onCloseModal}
-        onSave={onSave}
-        isSaving={isSaving}
-      />
     </>
   );
 }

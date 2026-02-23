@@ -1,110 +1,57 @@
 /**
- * Quota state management
- * Manages quota information for AI providers
+ * Quota cache that survives route switches.
  */
 
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import type { AuthFileItem } from '@/types/authFile';
-import type { QuotaResult } from '@/types/quota';
-import { quotaApi } from '@/services/api/quota';
-import { authFilesApi } from '@/services/api/authFiles';
+import type { AntigravityQuotaState, ClaudeQuotaState, CodexQuotaState, GeminiCliQuotaState } from '@/types';
 
-// Cache duration in milliseconds (5 minutes)
-const CACHE_DURATION = 5 * 60 * 1000;
+type QuotaUpdater<T> = T | ((prev: T) => T);
 
-interface QuotaState {
-  quotas: QuotaResult[];
-  loading: boolean;
-  errors: string[];
-  lastUpdated: number | null;
-
-  // Actions
-  fetchQuotas: (forceRefresh?: boolean) => Promise<void>;
-  clearQuotas: () => void;
+interface QuotaStoreState {
+  antigravityQuota: Record<string, AntigravityQuotaState>;
+  claudeQuota: Record<string, ClaudeQuotaState>;
+  codexQuota: Record<string, CodexQuotaState>;
+  geminiCliQuota: Record<string, GeminiCliQuotaState>;
+  setAntigravityQuota: (updater: QuotaUpdater<Record<string, AntigravityQuotaState>>) => void;
+  setClaudeQuota: (updater: QuotaUpdater<Record<string, ClaudeQuotaState>>) => void;
+  setCodexQuota: (updater: QuotaUpdater<Record<string, CodexQuotaState>>) => void;
+  setGeminiCliQuota: (updater: QuotaUpdater<Record<string, GeminiCliQuotaState>>) => void;
+  clearQuotaCache: () => void;
 }
 
-export const useQuotaStore = create<QuotaState>()(
-  persist(
-    (set, get) => ({
-      quotas: [],
-      loading: false,
-      errors: [],
-      lastUpdated: null,
+const resolveUpdater = <T,>(updater: QuotaUpdater<T>, prev: T): T => {
+  if (typeof updater === 'function') {
+    return (updater as (value: T) => T)(prev);
+  }
+  return updater;
+};
 
-      fetchQuotas: async (forceRefresh = false) => {
-        const { lastUpdated, quotas, loading } = get();
-        
-        // Skip if already loading
-        if (loading) return;
-        
-        // Use cache if valid and not forcing refresh
-        if (!forceRefresh && lastUpdated && quotas.length > 0) {
-          const cacheAge = Date.now() - lastUpdated;
-          if (cacheAge < CACHE_DURATION) {
-            return;
-          }
-        }
-
-        set({ loading: true, errors: [] });
-
-        try {
-          // First get the list of auth files
-          const authFilesResponse = await authFilesApi.list();
-          const authFiles: AuthFileItem[] = authFilesResponse.files || [];
-
-          // Filter for supported providers
-          const supportedFiles = authFiles.filter(
-            (file) => file.type === 'antigravity' || file.type === 'kiro'
-          );
-
-          if (supportedFiles.length === 0) {
-            set({
-              quotas: [],
-              loading: false,
-              lastUpdated: Date.now()
-            });
-            return;
-          }
-
-          // Fetch quotas for all supported files
-          const results = await quotaApi.fetchAllQuotas(supportedFiles);
-
-          // Collect any errors
-          const errors = results
-            .filter((r) => r.error)
-            .map((r) => `${r.email}: ${r.error}`);
-
-          set({
-            quotas: results,
-            loading: false,
-            errors,
-            lastUpdated: Date.now()
-          });
-        } catch (error: unknown) {
-          const message = error instanceof Error ? error.message : 'Failed to fetch quotas';
-          set({
-            loading: false,
-            errors: [message]
-          });
-        }
-      },
-
-      clearQuotas: () => {
-        set({
-          quotas: [],
-          loading: false,
-          errors: [],
-          lastUpdated: null
-        });
-      }
-    }),
-    {
-      name: 'quota-storage',
-      partialize: (state) => ({
-        quotas: state.quotas,
-        lastUpdated: state.lastUpdated
-      })
-    }
-  )
-);
+export const useQuotaStore = create<QuotaStoreState>((set) => ({
+  antigravityQuota: {},
+  claudeQuota: {},
+  codexQuota: {},
+  geminiCliQuota: {},
+  setAntigravityQuota: (updater) =>
+    set((state) => ({
+      antigravityQuota: resolveUpdater(updater, state.antigravityQuota)
+    })),
+  setClaudeQuota: (updater) =>
+    set((state) => ({
+      claudeQuota: resolveUpdater(updater, state.claudeQuota)
+    })),
+  setCodexQuota: (updater) =>
+    set((state) => ({
+      codexQuota: resolveUpdater(updater, state.codexQuota)
+    })),
+  setGeminiCliQuota: (updater) =>
+    set((state) => ({
+      geminiCliQuota: resolveUpdater(updater, state.geminiCliQuota)
+    })),
+  clearQuotaCache: () =>
+    set({
+      antigravityQuota: {},
+      claudeQuota: {},
+      codexQuota: {},
+      geminiCliQuota: {}
+    })
+}));

@@ -6,13 +6,16 @@ import { ToggleSwitch } from '@/components/ui/ToggleSwitch';
 import iconClaude from '@/assets/icons/claude.svg';
 import type { ProviderKeyConfig } from '@/types';
 import { maskApiKey } from '@/utils/format';
-import { calculateStatusBarData, type KeyStats, type UsageDetail } from '@/utils/usage';
+import {
+  buildCandidateUsageSourceIds,
+  calculateStatusBarData,
+  type KeyStats,
+  type UsageDetail,
+} from '@/utils/usage';
 import styles from '@/pages/AiProvidersPage.module.scss';
 import { ProviderList } from '../ProviderList';
 import { ProviderStatusBar } from '../ProviderStatusBar';
 import { getStatsBySource, hasDisableAllModelsRule } from '../utils';
-import type { ProviderFormState } from '../types';
-import { ClaudeModal } from './ClaudeModal';
 
 interface ClaudeSectionProps {
   configs: ProviderKeyConfig[];
@@ -20,16 +23,11 @@ interface ClaudeSectionProps {
   usageDetails: UsageDetail[];
   loading: boolean;
   disableControls: boolean;
-  isSaving: boolean;
   isSwitching: boolean;
-  isModalOpen: boolean;
-  modalIndex: number | null;
   onAdd: () => void;
   onEdit: (index: number) => void;
   onDelete: (index: number) => void;
   onToggle: (index: number, enabled: boolean) => void;
-  onCloseModal: () => void;
-  onSave: (data: ProviderFormState, index: number | null) => Promise<void>;
 }
 
 export function ClaudeSection({
@@ -38,32 +36,33 @@ export function ClaudeSection({
   usageDetails,
   loading,
   disableControls,
-  isSaving,
   isSwitching,
-  isModalOpen,
-  modalIndex,
   onAdd,
   onEdit,
   onDelete,
   onToggle,
-  onCloseModal,
-  onSave,
 }: ClaudeSectionProps) {
   const { t } = useTranslation();
-  const actionsDisabled = disableControls || isSaving || isSwitching;
-  const toggleDisabled = disableControls || loading || isSaving || isSwitching;
+  const actionsDisabled = disableControls || loading || isSwitching;
+  const toggleDisabled = disableControls || loading || isSwitching;
 
   const statusBarCache = useMemo(() => {
     const cache = new Map<string, ReturnType<typeof calculateStatusBarData>>();
-    const allApiKeys = new Set<string>();
-    configs.forEach((config) => config.apiKey && allApiKeys.add(config.apiKey));
-    allApiKeys.forEach((apiKey) => {
-      cache.set(apiKey, calculateStatusBarData(usageDetails, apiKey));
+
+    configs.forEach((config) => {
+      if (!config.apiKey) return;
+      const candidates = buildCandidateUsageSourceIds({
+        apiKey: config.apiKey,
+        prefix: config.prefix,
+      });
+      if (!candidates.length) return;
+      const candidateSet = new Set(candidates);
+      const filteredDetails = usageDetails.filter((detail) => candidateSet.has(detail.source));
+      cache.set(config.apiKey, calculateStatusBarData(filteredDetails));
     });
+
     return cache;
   }, [configs, usageDetails]);
-
-  const initialData = modalIndex !== null ? configs[modalIndex] : undefined;
 
   return (
     <>
@@ -99,12 +98,11 @@ export function ClaudeSection({
             />
           )}
           renderContent={(item) => {
-            const stats = getStatsBySource(item.apiKey, keyStats, maskApiKey);
+            const stats = getStatsBySource(item.apiKey, keyStats, item.prefix);
             const headerEntries = Object.entries(item.headers || {});
             const configDisabled = hasDisableAllModelsRule(item.excludedModels);
             const excludedModels = item.excludedModels ?? [];
-            const statusData =
-              statusBarCache.get(item.apiKey) || calculateStatusBarData([], item.apiKey);
+            const statusData = statusBarCache.get(item.apiKey) || calculateStatusBarData([]);
 
             return (
               <Fragment>
@@ -113,6 +111,12 @@ export function ClaudeSection({
                   <span className={styles.fieldLabel}>{t('common.api_key')}:</span>
                   <span className={styles.fieldValue}>{maskApiKey(item.apiKey)}</span>
                 </div>
+                {item.priority !== undefined && (
+                  <div className={styles.fieldRow}>
+                    <span className={styles.fieldLabel}>{t('common.priority')}:</span>
+                    <span className={styles.fieldValue}>{item.priority}</span>
+                  </div>
+                )}
                 {item.prefix && (
                   <div className={styles.fieldRow}>
                     <span className={styles.fieldLabel}>{t('common.prefix')}:</span>
@@ -131,6 +135,32 @@ export function ClaudeSection({
                     <span className={styles.fieldValue}>{item.proxyUrl}</span>
                   </div>
                 )}
+                {item.cloak && (
+                  <div className={styles.fieldRow}>
+                    <span className={styles.fieldLabel}>{t('ai_providers.claude_cloak_mode_label')}:</span>
+                    <span className={styles.fieldValue}>
+                      {(() => {
+                        const raw = (item.cloak?.mode ?? '').trim().toLowerCase();
+                        const key = raw === 'always' || raw === 'never' ? raw : 'auto';
+                        return t(`ai_providers.claude_cloak_mode_${key}`);
+                      })()}
+                    </span>
+                  </div>
+                )}
+                {item.cloak?.strictMode ? (
+                  <div className={styles.fieldRow}>
+                    <span className={styles.fieldLabel}>{t('ai_providers.claude_cloak_strict_label')}:</span>
+                    <span className={styles.fieldValue}>{t('common.yes')}</span>
+                  </div>
+                ) : null}
+                {item.cloak?.sensitiveWords?.length ? (
+                  <div className={styles.fieldRow}>
+                    <span className={styles.fieldLabel}>
+                      {t('ai_providers.claude_cloak_sensitive_words_count')}:
+                    </span>
+                    <span className={styles.fieldValue}>{item.cloak.sensitiveWords.length}</span>
+                  </div>
+                ) : null}
                 {headerEntries.length > 0 && (
                   <div className={styles.headerBadgeList}>
                     {headerEntries.map(([key, value]) => (
@@ -188,15 +218,6 @@ export function ClaudeSection({
           }}
         />
       </Card>
-
-      <ClaudeModal
-        isOpen={isModalOpen}
-        editIndex={modalIndex}
-        initialData={initialData}
-        onClose={onCloseModal}
-        onSave={onSave}
-        isSaving={isSaving}
-      />
     </>
   );
 }
