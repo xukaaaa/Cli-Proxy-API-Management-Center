@@ -1,6 +1,7 @@
 import { Fragment } from 'react';
 import { Button } from './Button';
 import { IconX } from './icons';
+import { SearchableSelect } from './SearchableSelect';
 import type { ModelAlias } from '@/types';
 
 interface ModelEntry {
@@ -34,7 +35,7 @@ interface ModelInputListProps {
 
 export const modelsToEntries = (models?: ModelAlias[]): ModelEntry[] => {
   if (!Array.isArray(models) || models.length === 0) {
-    return [{ name: '', alias: '' }];
+    return [{ name: '', alias: '', thinkingBudget: '' }];
   }
   return models.map((m) => ({
     name: m.name || '',
@@ -61,6 +62,7 @@ export const entriesToModels = (entries: ModelEntry[]): ModelAlias[] => {
 };
 
 export { type ModelEntry };
+
 export function ModelInputList({
   entries,
   onChange,
@@ -120,22 +122,17 @@ export function ModelInputList({
             />
             <span className="header-separator">→</span>
             {aliasInputMode === 'select' ? (
-              <select
-                className={inputClassNames}
+              <SearchableSelect
                 value={entry.alias}
-                onChange={(e) => updateEntry(index, 'alias', e.target.value)}
-                disabled={disabled}
-              >
-                <option value="">{aliasEmptyOptionLabel ?? aliasPlaceholder}</option>
-                {(entry.alias && !aliasOptions.includes(entry.alias)
+                onChange={(value) => updateEntry(index, 'alias', value)}
+                options={entry.alias && !aliasOptions.includes(entry.alias)
                   ? [...aliasOptions, entry.alias]
                   : aliasOptions
-                ).map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
+                }
+                placeholder={aliasEmptyOptionLabel ?? aliasPlaceholder}
+                disabled={disabled}
+                allowCustomValue
+              />
             ) : (
               <input
                 className={inputClassNames}
@@ -146,24 +143,17 @@ export function ModelInputList({
               />
             )}
             {showThinkingBudgetSelect ? (
-              <select
-                className={inputClassNames}
+              <SearchableSelect
                 value={entry.thinkingBudget ?? ''}
-                onChange={(e) => updateEntry(index, 'thinkingBudget', e.target.value)}
-                disabled={disabled}
-              >
-                <option value="">{thinkingBudgetPlaceholder}</option>
-                {((entry.thinkingBudget ?? '') && !thinkingBudgetOptions.includes(entry.thinkingBudget ?? '')
-                  ? [...thinkingBudgetOptions, entry.thinkingBudget ?? '']
+                onChange={(value) => updateEntry(index, 'thinkingBudget', value)}
+                options={(entry.thinkingBudget && !thinkingBudgetOptions.includes(entry.thinkingBudget)
+                  ? [...thinkingBudgetOptions, entry.thinkingBudget]
                   : thinkingBudgetOptions
-                )
-                  .filter(Boolean)
-                  .map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-              </select>
+                ).filter(Boolean)}
+                placeholder={thinkingBudgetPlaceholder}
+                disabled={disabled}
+                allowCustomValue
+              />
             ) : null}
             <Button
               variant="ghost"
