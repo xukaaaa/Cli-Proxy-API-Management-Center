@@ -1,0 +1,137 @@
+@use '../../styles/variables' as *;
+
+.container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: $radius-md;
+  background: var(--bg-primary);
+  cursor: pointer;
+  transition: all $transition-fast;
+  min-height: 40px;
+
+  &:hover:not(.disabled) {
+    border-color: var(--primary-color);
+  }
+
+  &.open {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--bg-secondary);
+  }
+}
+
+.placeholder {
+  color: var(--text-tertiary);
+}
+
+.arrow {
+  font-size: 10px;
+  color: var(--text-secondary);
+  transition: transform $transition-fast;
+
+  .open & {
+    transform: rotate(180deg);
+  }
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: $radius-md;
+  box-shadow: $shadow-lg;
+  z-index: $z-dropdown;
+  max-height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.searchBox {
+  padding: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.searchInput {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: $radius-sm;
+  font-size: 14px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary-color);
+  }
+}
+
+.optionsList {
+  overflow-y: auto;
+  max-height: 200px;
+  padding: 4px;
+}
+
+.option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: $radius-sm;
+  transition: background $transition-fast;
+
+  &:hover {
+    background: var(--bg-secondary);
+  }
+
+  &.selected {
+    background: rgba(59, 130, 246, 0.1);
+  }
+}
+
+.optionLabel {
+  font-size: 14px;
+  color: var(--text-primary);
+  user-select: none;
+  word-break: break-word;
+}
+
+.checkmark {
+  font-size: 14px;
+  color: var(--primary-color);
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.noResults {
+  padding: 16px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
