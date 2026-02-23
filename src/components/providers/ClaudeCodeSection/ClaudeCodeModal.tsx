@@ -93,14 +93,14 @@ export function ClaudeCodeModal({ isOpen, disableControls, onClose, onBusyChange
 
       const firstApiKey = config?.apiKeys?.find((key) => String(key || '').trim())?.trim();
       try {
-        const list = await modelsApi.fetchModelsViaApiCall(trimmedBaseUrl, firstApiKey);
+        const list = await modelsApi.fetchV1ModelsViaApiCall(trimmedBaseUrl, firstApiKey);
         applyIfLatest(() => {
           setModelOptions(normalizeModelOptions(list));
         });
       } catch (err: unknown) {
         if (allowFallback && firstApiKey) {
           try {
-            const list = await modelsApi.fetchModelsViaApiCall(trimmedBaseUrl);
+            const list = await modelsApi.fetchV1ModelsViaApiCall(trimmedBaseUrl);
             applyIfLatest(() => {
               setModelOptions(normalizeModelOptions(list));
             });
