@@ -2,15 +2,34 @@
 @use '../styles/mixins' as *;
 
 .container {
+  width: 100%;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   gap: $spacing-lg;
+  position: relative;
 }
 
-.pageHeader {
+// Header
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+}
+
+.headerLeft {
   display: flex;
   flex-direction: column;
+  gap: 4px;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
   gap: $spacing-sm;
+  flex-wrap: wrap;
 }
 
 .pageTitle {
@@ -20,379 +39,702 @@
   margin: 0;
 }
 
-.description {
-  font-size: 14px;
+.lastUpdated {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+// Error Box
+.errorBox {
+  padding: 12px 16px;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--error-color);
+  border-radius: $radius-md;
+  color: var(--error-color);
+  font-size: 13px;
+}
+
+.errorList {
+  margin: 8px 0 0 0;
+  padding: 0 0 0 16px;
+
+  li {
+    margin: 4px 0;
+  }
+}
+
+// Loading Overlay
+.loadingOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(243, 244, 246, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+:global([data-theme='dark']) .loadingOverlay {
+  background: rgba(25, 25, 25, 0.72);
+}
+
+.loadingOverlayContent {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: $radius-lg;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  box-shadow: var(--shadow-lg);
+}
+
+.loadingOverlaySpinner {
+  border-color: rgba(59, 130, 246, 0.25);
+  border-top-color: var(--primary-color);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.25);
+}
+
+.loadingOverlayText {
+  font-size: 13px;
+  font-weight: 600;
   color: var(--text-secondary);
+}
+
+// Empty State
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  gap: 12px;
+  background: var(--bg-secondary);
+  border-radius: $radius-lg;
+  border: 1px solid var(--border-color);
+}
+
+.emptyIcon {
+  font-size: 48px;
+  color: var(--text-tertiary);
+  opacity: 0.6;
+}
+
+.emptyTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
   margin: 0;
 }
 
-.headerActions {
-  display: flex;
-  gap: $spacing-sm;
-  flex-wrap: wrap;
-  align-items: center;
-
-  :global(.btn-sm) {
-    line-height: 16px;
-  }
-
-  :global(svg) {
-    display: block;
-  }
-}
-
-.titleWrapper {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-  line-height: 24px;
-}
-
-.countBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 24px;
-  min-width: 24px;
-  padding: 0 8px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--count-badge-text);
-  background-color: var(--count-badge-bg);
-  box-sizing: border-box;
-}
-
-.errorBox {
-  padding: $spacing-md;
-  background-color: rgba($error-color, 0.1);
-  border: 1px solid var(--danger-color);
-  border-radius: $radius-md;
-  color: var(--danger-color);
+.emptyDesc {
   font-size: 14px;
-}
-
-.pageSizeSelect {
-  padding: 8px 12px;
-  border: 1px solid var(--border-color);
-  border-radius: $radius-md;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  font-size: 14px;
-  cursor: text;
-  height: 38px;
-  box-sizing: border-box;
-
-  &:focus {
-    outline: none;
-    border-color: var(--primary-color);
-  }
-}
-
-.statsInfo {
-  padding: 8px 12px;
-  background-color: var(--bg-secondary);
-  border-radius: $radius-md;
-  font-size: 13px;
   color: var(--text-secondary);
-  white-space: nowrap;
-  height: 38px;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
+  margin: 0;
+  max-width: 400px;
 }
 
-.antigravityGrid,
-.claudeGrid,
-.codexGrid,
-.geminiCliGrid {
-  display: grid;
+.hint {
+  color: var(--text-secondary);
+  font-size: 13px;
+  text-align: center;
+  padding: 24px 16px;
+}
+
+// ==========================================
+// SECTION (Provider Group)
+// ==========================================
+.section {
+  display: flex;
+  flex-direction: column;
   gap: $spacing-md;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-
-  @include mobile {
-    grid-template-columns: 1fr;
-  }
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
 }
 
-.antigravityControls,
-.claudeControls,
-.codexControls,
-.geminiCliControls {
-  display: flex;
-  gap: $spacing-md;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  margin-bottom: $spacing-md;
-}
-
-.antigravityControl,
-.claudeControl,
-.codexControl,
-.geminiCliControl {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-
-  label {
-    font-size: 12px;
-    color: var(--text-secondary);
-    font-weight: 500;
-    white-space: nowrap;
-  }
-}
-
-.viewModeToggle {
-  display: flex;
-  gap: $spacing-xs;
-  align-items: center;
-}
-
-.claudeCard {
-  background-image: linear-gradient(180deg,
-      rgba(252, 228, 236, 0.18),
-      rgba(252, 228, 236, 0));
-}
-
-.antigravityCard {
-  background-image: linear-gradient(180deg,
-      rgba(224, 247, 250, 0.12),
-      rgba(224, 247, 250, 0));
-}
-
-.codexCard {
-  background-image: linear-gradient(180deg,
-      rgba(255, 243, 224, 0.18),
-      rgba(255, 243, 224, 0));
-}
-
-.geminiCliCard {
-  background-image: linear-gradient(180deg,
-      rgba(231, 239, 255, 0.2),
-      rgba(231, 239, 255, 0));
-}
-
-.quotaSection {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-sm;
-  padding-top: $spacing-sm;
-  margin-top: $spacing-xs;
-  border-top: 1px dashed var(--border-color);
-}
-
-.quotaRow {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-xs;
-}
-
-.quotaRowHeader {
+.sectionHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-sm;
-  min-width: 0;
+  gap: $spacing-md;
+  padding-bottom: $spacing-sm;
+  border-bottom: 1px solid var(--border-color);
+}
 
-  @include mobile {
-    flex-direction: column;
-    align-items: flex-start;
+.providerBadge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &.antigravity {
+    background: linear-gradient(135deg, rgba(66, 133, 244, 0.15), rgba(52, 168, 83, 0.15));
+    color: #4285f4;
+  }
+
+  &.kiro {
+    background: linear-gradient(135deg, rgba(255, 153, 0, 0.15), rgba(255, 102, 0, 0.15));
+    color: #ff9900;
   }
 }
 
-.quotaModel {
-  font-size: 13px;
+.sectionCount {
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  padding: 4px 10px;
+  border-radius: $radius-full;
+  white-space: nowrap;
+}
+
+// ==========================================
+// ACCOUNTS LIST (Grid layout)
+// ==========================================
+.accountsList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: $spacing-md;
+}
+
+// ==========================================
+// ACCOUNT CARD
+// ==========================================
+.accountCard {
+  background: var(--bg-secondary);
+  border-radius: $radius-lg;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  transition:
+    border-color $transition-fast,
+    box-shadow $transition-fast;
+
+  &:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  &.hasError {
+    border-color: var(--error-color);
+  }
+}
+
+// Card Header (Top)
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-md;
+  gap: $spacing-md;
+  flex-wrap: wrap;
+}
+
+.cardIdentity {
+  min-width: 0;
+  flex: 1;
+  max-width: 100%;
+}
+
+.email {
+  display: block;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex: 1;
-  min-width: 0;
-
-  @include mobile {
-    white-space: normal;
-  }
+  max-width: 100%;
 }
 
-.quotaBar {
-  height: 8px;
-  background-color: var(--bg-tertiary);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.quotaBarFill {
-  height: 100%;
-  background-color: var(--success-color, #22c55e);
-  transition: width 0.2s ease;
-}
-
-.quotaBarFillHigh {
-  background-color: var(--success-color, #22c55e);
-}
-
-.quotaBarFillMedium {
-  background-color: var(--warning-color);
-}
-
-.quotaBarFillLow {
-  background-color: var(--danger-color);
-}
-
-.quotaMeta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--text-secondary);
-  white-space: nowrap;
-
-  @include mobile {
-    justify-content: flex-start;
-  }
-}
-
-.quotaPercent {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.quotaReset {
-  color: var(--text-tertiary);
-}
-
-.quotaAmount {
-  color: var(--text-secondary);
-}
-
-.quotaMessage {
-  font-size: 12px;
-  color: var(--text-tertiary);
-  text-align: center;
-  padding: $spacing-sm 0;
-}
-
-.quotaError {
-  font-size: 12px;
-  color: var(--danger-color);
-  background-color: rgba($error-color, 0.08);
-  border: 1px solid var(--danger-color);
-  border-radius: $radius-sm;
-  padding: $spacing-xs $spacing-sm;
-}
-
-.quotaWarning {
-  font-size: 12px;
-  color: var(--warning-text);
-  background-color: var(--warning-bg);
-  border: 1px solid var(--warning-border);
-  border-radius: $radius-sm;
-  padding: $spacing-xs $spacing-sm;
-}
-
-.codexPlan {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.codexPlanLabel {
-  color: var(--text-tertiary);
-}
-
-.codexPlanValue {
-  font-weight: 600;
-  color: var(--text-primary);
-  text-transform: capitalize;
-}
-
-.fileCard {
-  background-color: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: $radius-lg;
-  padding: $spacing-md;
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-sm;
-  transition: transform $transition-fast, box-shadow $transition-fast, border-color $transition-fast;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: $shadow-md;
-    border-color: rgba(37, 99, 235, 0.2);
-  }
-}
-
-.cardHeader {
+.cardActions {
   display: flex;
   align-items: center;
   gap: $spacing-sm;
-  min-height: 28px;
-}
-
-.typeBadge {
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
   flex-shrink: 0;
 }
 
-.fileName {
+.refreshBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: $radius-sm;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all $transition-fast;
+
+  &:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background: rgba(59, 130, 246, 0.05);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .spinning {
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: $radius-full;
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--primary-color);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+// Tags Row (optional)
+.tagsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+  padding: 0 $spacing-md $spacing-sm $spacing-md;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: $radius-full;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+// Error State
+.accountError {
+  margin: 0 $spacing-md $spacing-md $spacing-md;
+  padding: 10px 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: $radius-sm;
+  color: var(--error-color);
+  font-size: 12px;
+  word-break: break-word;
+}
+
+// ==========================================
+// RESOURCE LIST (Quota Items)
+// ==========================================
+.resourceList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  padding: $spacing-md;
+  padding-top: 0;
+}
+
+// ==========================================
+// RESOURCE ROW (Single Quota Item)
+// ==========================================
+.resourceRow {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  padding: $spacing-md;
+  background: transparent;
+  border-radius: $radius-md;
+  border: 1px solid var(--border-color);
+  min-height: 72px;
+}
+
+// Row 1: Info line
+.resourceInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-md;
+  flex-wrap: wrap;
+}
+
+.resourceIdentity {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  min-width: 0;
+  flex: 1;
+}
+
+.modelIcon {
+  width: 22px;
+  height: 22px;
+  border-radius: $radius-sm;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.modelName {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.resourceMetrics {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex-shrink: 0;
+}
+
+.percentage {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: $radius-full;
+
+  &.high {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+  }
+
+  &.medium {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+  }
+
+  &.low {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+  }
+}
+
+// Dark mode: softer percentage colors
+:global([data-theme='dark']) .percentage {
+  &.high {
+    background: rgba(22, 163, 74, 0.2);
+    color: #16a34a;
+  }
+
+  &.medium {
+    background: rgba(217, 119, 6, 0.2);
+    color: #d97706;
+  }
+
+  &.low {
+    background: rgba(220, 38, 38, 0.2);
+    color: #dc2626;
+  }
+}
+
+.resetTime {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+
+  svg {
+    flex-shrink: 0;
+  }
+}
+
+// Row 2: Progress Bar
+.progressBar {
+  margin-top: 4px;
+}
+
+.progressTrack {
+  height: 10px;
+  background: var(--bg-tertiary);
+  border-radius: $radius-full;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: $radius-full;
+  transition: width 0.3s ease;
+
+  &.high {
+    background: linear-gradient(90deg, #4ade80, #22c55e);
+  }
+
+  &.medium {
+    background: linear-gradient(90deg, #fbbf24, #f59e0b);
+  }
+
+  &.low {
+    background: linear-gradient(90deg, #f87171, #ef4444);
+  }
+}
+
+// Dark mode: softer progress colors
+:global([data-theme='dark']) .progressFill {
+  &.high {
+    background: linear-gradient(90deg, #16a34a, #15803d);
+  }
+
+  &.medium {
+    background: linear-gradient(90deg, #d97706, #b45309);
+  }
+
+  &.low {
+    background: linear-gradient(90deg, #dc2626, #b91c1c);
+  }
+}
+
+// ==========================================
+// COLLAPSIBLE GROUP (Model Category)
+// ==========================================
+.collapsibleGroup {
+  border: 1px solid var(--border-color);
+  border-radius: $radius-md;
+  overflow: hidden;
+}
+
+.groupHeader {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  width: 100%;
+  padding: $spacing-md;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color $transition-fast;
+  text-align: left;
+
+  &:hover {
+    background: var(--bg-tertiary);
+  }
+}
+
+.groupHeaderTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.groupLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.groupName {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
-  word-break: break-all;
-  line-height: 1.4;
 }
 
-.pagination {
+.modelCount {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.groupRight {
   display: flex;
-  justify-content: center;
   align-items: center;
   gap: $spacing-md;
-  margin-top: $spacing-lg;
-  padding-top: $spacing-md;
-  border-top: 1px solid var(--border-color);
-}
-
-.pageInfo {
-  font-size: 13px;
   color: var(--text-secondary);
-  padding: $spacing-xs $spacing-md;
-  background-color: var(--bg-secondary);
-  border-radius: $radius-md;
 }
 
-.warningOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+.groupContent {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  padding: $spacing-sm;
+  border-top: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+:global([data-theme='dark']) .groupContent {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+// Model row inside collapsed group (simple name + percentage)
+.modelRow {
   display: flex;
   align-items: center;
-  justify-content: center;
-  z-index: 1000;
+  justify-content: space-between;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $radius-sm;
+
+  &:hover {
+    background: var(--bg-tertiary);
+  }
 }
 
-.warningModal {
-  background-color: var(--bg-primary);
-  border-radius: $radius-lg;
-  padding: $spacing-lg;
-  max-width: 400px;
-  text-align: center;
-  box-shadow: $shadow-lg;
+.modelPercent {
+  font-size: 13px;
+  font-weight: 600;
 
-  p {
-    margin: 0 0 $spacing-md 0;
-    color: var(--text-primary);
-    font-size: 14px;
-    line-height: 1.6;
+  &.high {
+    color: #22c55e;
+  }
+
+  &.medium {
+    color: #f59e0b;
+  }
+
+  &.low {
+    color: #ef4444;
+  }
+}
+
+:global([data-theme='dark']) .modelPercent {
+  &.high {
+    color: #16a34a;
+  }
+
+  &.medium {
+    color: #d97706;
+  }
+
+  &.low {
+    color: #dc2626;
+  }
+}
+
+// ==========================================
+// RESPONSIVE
+// ==========================================
+@include mobile {
+  .container {
+    gap: $spacing-md;
+  }
+
+  .header {
+    gap: $spacing-sm;
+  }
+
+  .pageTitle {
+    font-size: 22px;
+  }
+
+  .lastUpdated {
+    font-size: 11px;
+  }
+
+  .section {
+    padding: $spacing-md;
+    gap: $spacing-sm;
+  }
+
+  .sectionHeader {
+    gap: $spacing-sm;
+    padding-bottom: $spacing-sm;
+  }
+
+  .providerIcon {
+    width: 26px;
+    height: 26px;
+    font-size: 12px;
+  }
+
+  .providerName {
+    font-size: 15px;
+  }
+
+  .sectionCount {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+
+  .accountsList {
+    gap: $spacing-sm;
+  }
+
+  .accountCard {
+    border-radius: $radius-md;
+  }
+
+  .cardHeader {
+    padding: $spacing-sm;
+    gap: $spacing-sm;
+  }
+
+  .avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .email {
+    font-size: 12px;
+  }
+
+  .badge {
+    padding: 3px 8px;
+    font-size: 10px;
+  }
+
+  .resourceList {
+    padding: $spacing-sm;
+    padding-top: 0;
+    gap: $spacing-xs;
+  }
+
+  .resourceRow {
+    padding: $spacing-sm;
+    gap: $spacing-xs;
+    min-height: auto;
+    border-radius: $radius-sm;
+  }
+
+  .modelName {
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .percentage {
+    font-size: 11px;
+    padding: 2px 6px;
+  }
+
+  .resetTime {
+    font-size: 10px;
+    gap: 3px;
+  }
+
+  .progressTrack {
+    height: 8px;
+  }
+
+  .progressBar {
+    margin-top: 3px;
+  }
+
+  .resourceInfo {
+    flex-wrap: wrap;
+    gap: $spacing-sm;
+  }
+
+  .resourceIdentity {
+    flex: 1;
+    min-width: 120px;
   }
 }

@@ -1,99 +1,377 @@
-/**
- * Quota management page - coordinates the three quota sections.
- */
-
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useHeaderRefresh } from '@/hooks/useHeaderRefresh';
-import { useAuthStore } from '@/stores';
-import { authFilesApi, configFileApi } from '@/services/api';
-import {
-  QuotaSection,
-  ANTIGRAVITY_CONFIG,
-  CLAUDE_CONFIG,
-  CODEX_CONFIG,
-  GEMINI_CLI_CONFIG
-} from '@/components/quota';
-import type { AuthFileItem } from '@/types';
+import { Button } from '@/components/ui/Button';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { IconRefreshCw, IconTimer, IconChartLine } from '@/components/ui/icons';
+import { useAuthStore, useQuotaStore } from '@/stores';
+import type { QuotaProvider, QuotaResult, QuotaInfo, QuotaGroup } from '@/types/quota';
 import styles from './QuotaPage.module.scss';
 
+// Constants for percentage thresholds
+const HIGH_PERCENT_THRESHOLD = 70;
+const MEDIUM_PERCENT_THRESHOLD = 30;
+
+// Threshold for showing relative time (in hours)
+const RELATIVE_TIME_THRESHOLD_HOURS = 24;
+
+// Provider configuration (Kiro first)
+const PROVIDER_CONFIG = {
+  kiro: {
+    name: 'Kiro',
+    icon: 'K',
+    className: 'kiro',
+  },
+  antigravity: {
+    name: 'Antigravity',
+    icon: 'A',
+    className: 'antigravity',
+  },
+} as const;
+
+function getPercentLevel(percent: number): 'high' | 'medium' | 'low' {
+  if (percent >= HIGH_PERCENT_THRESHOLD) return 'high';
+  if (percent >= MEDIUM_PERCENT_THRESHOLD) return 'medium';
+  return 'low';
+}
+
+function formatResetTime(isoString?: string): string {
+  if (!isoString) return '';
+  try {
+    const date = new Date(isoString);
+    if (Number.isNaN(date.getTime())) return isoString;
+
+    const now = new Date();
+    const diff = date.getTime() - now.getTime();
+
+    // If reset time is in the future and less than threshold, show relative time
+    if (diff > 0 && diff < RELATIVE_TIME_THRESHOLD_HOURS * 60 * 60 * 1000) {
+      const hours = Math.floor(diff / (60 * 60 * 1000));
+      const minutes = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
+      if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+      }
+      return `${minutes}m`;
+    }
+
+    // Show date format dd/mm HH:mm
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const hours = date.getHours().toString().padStart(2, '0');
+    const mins = date.getMinutes().toString().padStart(2, '0');
+    return `${day}/${month} ${hours}:${mins}`;
+  } catch {
+    return isoString;
+  }
+}
+
+interface ResourceRowProps {
+  quota: QuotaInfo;
+}
+
+function ResourceRow({ quota }: ResourceRowProps) {
+  const level = getPercentLevel(quota.remainingPercent);
+  const resetTimeStr = formatResetTime(quota.resetTime);
+  const expiryTimeStr = formatResetTime(quota.expiryTime);
+
+  // Format usage display
+  const getUsageDisplay = () => {
+    if (quota.isAbsoluteValue) {
+      // Show remaining/limit format (e.g., 50/50 = full, 10/50 = low)
+      const remaining = Math.round((quota.limit - quota.used) * 100) / 100;
+      return `${remaining}/${quota.limit}`;
+    }
+    return `${quota.remainingPercent.toFixed(0)}%`;
+  };
+
+  return (
+    <div className={styles.resourceRow}>
+      <div className={styles.resourceInfo}>
+        <div className={styles.resourceIdentity}>
+          <span className={styles.modelName}>{quota.displayName || quota.modelName}</span>
+        </div>
+        <div className={styles.resourceMetrics}>
+          <span className={`${styles.percentage} ${styles[level]}`}>{getUsageDisplay()}</span>
+          {quota.expiryTime && expiryTimeStr && (
+            <span className={styles.resetTime}>
+              <IconTimer size={12} />
+              <span>{expiryTimeStr}</span>
+            </span>
+          )}
+          {!quota.expiryTime && resetTimeStr && (
+            <span className={styles.resetTime}>
+              <IconTimer size={12} />
+              <span>{resetTimeStr}</span>
+            </span>
+          )}
+        </div>
+      </div>
+      <div className={styles.progressBar}>
+        <div className={styles.progressTrack}>
+          <div
+            className={`${styles.progressFill} ${styles[level]}`}
+            style={{ width: `${Math.max(0, Math.min(100, quota.remainingPercent))}%` }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface GroupRowProps {
+  group: QuotaGroup;
+}
+
+function GroupRow({ group }: GroupRowProps) {
+  const level = getPercentLevel(group.avgRemainingPercent);
+  const resetTimeStr = formatResetTime(group.earliestResetTime);
+
+  return (
+    <div className={styles.resourceRow}>
+      <div className={styles.resourceInfo}>
+        <div className={styles.resourceIdentity}>
+          <span className={styles.modelName}>{group.displayName}</span>
+        </div>
+        <div className={styles.resourceMetrics}>
+          <span className={`${styles.percentage} ${styles[level]}`}>
+            {group.avgRemainingPercent.toFixed(0)}%
+          </span>
+          {resetTimeStr && (
+            <span className={styles.resetTime}>
+              <IconTimer size={12} />
+              <span>{resetTimeStr}</span>
+            </span>
+          )}
+        </div>
+      </div>
+      <div className={styles.progressBar}>
+        <div className={styles.progressTrack}>
+          <div
+            className={`${styles.progressFill} ${styles[level]}`}
+            style={{ width: `${Math.max(0, Math.min(100, group.avgRemainingPercent))}%` }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface AccountCardProps {
+  result: QuotaResult;
+  t: (key: string, options?: Record<string, unknown>) => string;
+  onRefresh?: () => void;
+  refreshing?: boolean;
+}
+
+function AccountCard({ result, t, onRefresh, refreshing }: AccountCardProps) {
+  const hasError = !!result.error;
+  const hasQuotas = result.quotas.length > 0;
+  const hasGroups = result.groups && result.groups.length > 0;
+
+  return (
+    <div className={`${styles.accountCard} ${hasError ? styles.hasError : ''}`}>
+      {/* Top Header */}
+      <div className={styles.cardHeader}>
+        <div className={styles.cardIdentity}>
+          <span className={styles.email}>{result.email}</span>
+        </div>
+        <div className={styles.cardActions}>
+          {onRefresh && (
+            <button
+              className={styles.refreshBtn}
+              onClick={onRefresh}
+              disabled={refreshing}
+              title={t('quota.refresh')}
+            >
+              <IconRefreshCw size={14} className={refreshing ? styles.spinning : ''} />
+            </button>
+          )}
+          {result.subscriptionType && (
+            <span className={styles.badge}>{result.subscriptionType}</span>
+          )}
+        </div>
+      </div>
+
+      {/* Tags Row (optional - for additional subscription info) */}
+      {result.subscriptionType &&
+        result.quotas.length > 0 &&
+        result.quotas[0]?.subscriptionType &&
+        result.quotas[0]?.subscriptionType !== result.subscriptionType && (
+          <div className={styles.tagsRow}>
+            <span className={styles.tag}>{result.quotas[0]?.subscriptionType}</span>
+          </div>
+        )}
+
+      {/* Error State */}
+      {hasError && <div className={styles.accountError}>{result.error}</div>}
+
+      {/* Resource Groups (for Antigravity - simple rows) */}
+      {hasGroups ? (
+        <div className={styles.resourceList}>
+          {result.groups!.map((group) => (
+            <GroupRow key={group.category} group={group} />
+          ))}
+        </div>
+      ) : hasQuotas ? (
+        /* Resource Rows (flat list for Kiro) */
+        <div className={styles.resourceList}>
+          {result.quotas.map((quota, index) => (
+            <ResourceRow key={`${quota.modelName}-${index}`} quota={quota} />
+          ))}
+        </div>
+      ) : !hasError ? (
+        <div className={styles.hint}>{t('quota.no_quota_data')}</div>
+      ) : null}
+    </div>
+  );
+}
+
+interface ProviderSectionProps {
+  provider: QuotaProvider;
+  accounts: QuotaResult[];
+  t: (key: string, options?: Record<string, unknown>) => string;
+}
+
+function ProviderSection({ provider, accounts, t }: ProviderSectionProps) {
+  const config = PROVIDER_CONFIG[provider];
+
+  return (
+    <section className={styles.section}>
+      <div className={styles.sectionHeader}>
+        <span className={`${styles.providerBadge} ${styles[config.className]}`}>
+          {config.name}
+        </span>
+        <span className={styles.sectionCount}>
+          {accounts.length} {t('quota.accounts')}
+        </span>
+      </div>
+
+      <div className={styles.accountsList}>
+        {accounts.map((result, index) => (
+          <AccountCard key={`${result.email}-${index}`} result={result} t={t} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function QuotaPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const connectionStatus = useAuthStore((state) => state.connectionStatus);
-
-  const [files, setFiles] = useState<AuthFileItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  const disableControls = connectionStatus !== 'connected';
-
-  const loadConfig = useCallback(async () => {
-    try {
-      await configFileApi.fetchConfigYaml();
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : t('notification.refresh_failed');
-      setError((prev) => prev || errorMessage);
-    }
-  }, [t]);
-
-  const loadFiles = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const data = await authFilesApi.list();
-      setFiles(data?.files || []);
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : t('notification.refresh_failed');
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, [t]);
-
-  const handleHeaderRefresh = useCallback(async () => {
-    await Promise.all([loadConfig(), loadFiles()]);
-  }, [loadConfig, loadFiles]);
-
-  useHeaderRefresh(handleHeaderRefresh);
+  const quotas = useQuotaStore((state) => state.quotas);
+  const loading = useQuotaStore((state) => state.loading);
+  const errors = useQuotaStore((state) => state.errors);
+  const lastUpdated = useQuotaStore((state) => state.lastUpdated);
+  const fetchQuotas = useQuotaStore((state) => state.fetchQuotas);
 
   useEffect(() => {
-    loadFiles();
-    loadConfig();
-  }, [loadFiles, loadConfig]);
+    if (connectionStatus === 'connected') {
+      fetchQuotas();
+    }
+  }, [connectionStatus, fetchQuotas]);
+
+  const handleRefresh = () => {
+    fetchQuotas(true);
+  };
+
+  // Group quotas by provider
+  const groupedQuotas = useMemo(() => {
+    const groups: Record<QuotaProvider, QuotaResult[]> = {
+      antigravity: [],
+      kiro: [],
+    };
+
+    for (const result of quotas) {
+      if (groups[result.provider]) {
+        groups[result.provider].push(result);
+      }
+    }
+
+    return groups;
+  }, [quotas]);
+
+  const hasAntigravity = groupedQuotas.antigravity.length > 0;
+  const hasKiro = groupedQuotas.kiro.length > 0;
+  const hasAnyQuotas = hasAntigravity || hasKiro;
+
+  const formatLastUpdated = () => {
+    if (!lastUpdated) return '';
+    const date = new Date(lastUpdated);
+    return date.toLocaleTimeString(i18n.language, {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  };
 
   return (
     <div className={styles.container}>
-      <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>{t('quota_management.title')}</h1>
-        <p className={styles.description}>{t('quota_management.description')}</p>
+      {loading && !hasAnyQuotas && (
+        <div className={styles.loadingOverlay} aria-busy="true">
+          <div className={styles.loadingOverlayContent}>
+            <LoadingSpinner size={28} className={styles.loadingOverlaySpinner} />
+            <span className={styles.loadingOverlayText}>{t('common.loading')}</span>
+          </div>
+        </div>
+      )}
+
+      <div className={styles.header}>
+        <div className={styles.headerLeft}>
+          <h1 className={styles.pageTitle}>{t('quota.title')}</h1>
+          {lastUpdated && (
+            <span className={styles.lastUpdated}>
+              {t('quota.last_updated')}: {formatLastUpdated()}
+            </span>
+          )}
+        </div>
+        <div className={styles.headerActions}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleRefresh}
+            loading={loading}
+            disabled={connectionStatus !== 'connected'}
+          >
+            {loading ? t('common.loading') : t('quota.refresh')}
+          </Button>
+        </div>
       </div>
 
-      {error && <div className={styles.errorBox}>{error}</div>}
+      {errors.length > 0 && (
+        <div className={styles.errorBox}>
+          <strong>{t('quota.errors_occurred')}:</strong>
+          <ul className={styles.errorList}>
+            {errors.map((error, index) => (
+              <li key={index}>{error}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
-      <QuotaSection
-        config={CLAUDE_CONFIG}
-        files={files}
-        loading={loading}
-        disabled={disableControls}
-      />
-      <QuotaSection
-        config={ANTIGRAVITY_CONFIG}
-        files={files}
-        loading={loading}
-        disabled={disableControls}
-      />
-      <QuotaSection
-        config={CODEX_CONFIG}
-        files={files}
-        loading={loading}
-        disabled={disableControls}
-      />
-      <QuotaSection
-        config={GEMINI_CLI_CONFIG}
-        files={files}
-        loading={loading}
-        disabled={disableControls}
-      />
+      {!hasAnyQuotas && !loading && (
+        <div className={styles.emptyState}>
+          <div className={styles.emptyIcon} aria-label="Chart icon">
+            <IconChartLine size={48} />
+          </div>
+          <h3 className={styles.emptyTitle}>{t('quota.empty_title')}</h3>
+          <p className={styles.emptyDesc}>{t('quota.empty_desc')}</p>
+        </div>
+      )}
+
+      {hasKiro && (
+        <ProviderSection
+          provider="kiro"
+          accounts={groupedQuotas.kiro}
+          t={t}
+        />
+      )}
+
+      {hasAntigravity && (
+        <ProviderSection
+          provider="antigravity"
+          accounts={groupedQuotas.antigravity}
+          t={t}
+        />
+      )}
     </div>
   );
 }

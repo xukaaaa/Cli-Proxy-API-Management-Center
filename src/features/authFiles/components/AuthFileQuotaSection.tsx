@@ -2,7 +2,8 @@ import { useCallback, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { ANTIGRAVITY_CONFIG, CODEX_CONFIG, GEMINI_CLI_CONFIG } from '@/components/quota';
-import { useNotificationStore, useQuotaStore } from '@/stores';
+import { useNotificationStore } from '@/stores';
+import { useQuotaCacheStore as useQuotaStore } from '@/stores/useQuotaCacheStore';
 import type { AuthFileItem } from '@/types';
 import { getStatusFromError } from '@/utils/quota';
 import {
