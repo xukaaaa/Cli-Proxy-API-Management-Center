@@ -56,7 +56,7 @@ export function ApiKeysPage() {
         setApiKeys(list);
 
         // Load policies from config (backend returns "api-key-policies" in raw)
-        const policiesConfig = config?.apiKeyPolicies || config?.raw?.['api-key-policies'] || {};
+        const policiesConfig = (config?.apiKeyPolicies || config?.raw?.['api-key-policies'] || {}) as Record<string, QuotaPolicy>;
         console.log('Loading policies from config:', policiesConfig);
         setPolicies(policiesConfig);
 
@@ -115,7 +115,7 @@ export function ApiKeysPage() {
   // Sync policies from config
   useEffect(() => {
     // Backend returns "api-key-policies" (kebab-case), not "apiKeyPolicies" (camelCase)
-    const policiesFromConfig = config?.apiKeyPolicies || config?.raw?.['api-key-policies'] || {};
+    const policiesFromConfig = (config?.apiKeyPolicies || config?.raw?.['api-key-policies'] || {}) as Record<string, QuotaPolicy>;
     console.log('Syncing policies from config:', policiesFromConfig);
     setPolicies(policiesFromConfig);
   }, [config?.apiKeyPolicies, config?.raw]);

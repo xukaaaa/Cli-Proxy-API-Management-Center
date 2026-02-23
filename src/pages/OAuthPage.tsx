@@ -171,7 +171,6 @@ export function OAuthPage() {
   };
 
   const startAuth = async (provider: OAuthProvider) => {
-<<<<<<< HEAD
     const geminiState = provider === 'gemini-cli' ? states[provider] : undefined;
     const rawProjectId = provider === 'gemini-cli' ? (geminiState?.projectId || '').trim() : '';
     const projectId = rawProjectId
@@ -179,12 +178,8 @@ export function OAuthPage() {
         ? 'ALL'
         : rawProjectId
       : undefined;
-    // 项目 ID 可选：留空自动选择第一个可用项目；输入 ALL 获取全部项目
-=======
-    const projectId = provider === 'gemini-cli' ? (states[provider]?.projectId || '').trim() : undefined;
     const kiroMethod = provider === 'kiro' ? (states[provider]?.kiroMethod || 'google') : undefined;
-    
->>>>>>> ac907c3 (feat: Add Kiro OAuth provider and enable auto refresh in Logs viewer)
+    // 项目 ID 可选：留空自动选择第一个可用项目；输入 ALL 获取全部项目
     if (provider === 'gemini-cli') {
       updateProviderState(provider, { projectIdError: undefined });
     }
@@ -399,7 +394,6 @@ export function OAuthPage() {
                   </Button>
                 }
               >
-<<<<<<< HEAD
                 <div className={styles.cardContent}>
                   <div className={styles.cardHint}>{t(provider.hintKey)}</div>
                   {provider.id === 'gemini-cli' && (
@@ -420,6 +414,47 @@ export function OAuthPage() {
                       />
                     </div>
                   )}
+                  {provider.id === 'kiro' && (
+                    <div className={styles.kiroMethodField}>
+                      <label className={styles.kiroMethodLabel}>{t('auth_login.kiro_method_label')}</label>
+                      <div className={styles.kiroMethodButtons}>
+                        {KIRO_METHODS.map((method) => (
+                          <Button
+                            key={method.value}
+                            variant={(state.kiroMethod || 'google') === method.value ? 'primary' : 'secondary'}
+                            size="sm"
+                            onClick={() => updateProviderState(provider.id, { kiroMethod: method.value })}
+                            disabled={state.polling}
+                          >
+                            {t(method.labelKey)}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {provider.id === 'kiro' && state.polling && !state.url && !state.verificationUrl && (
+                    <div className="status-badge" style={{ marginTop: 8 }}>
+                      {t('auth_login.kiro_waiting_auth_url')}
+                    </div>
+                  )}
+                  {provider.id === 'kiro' && state.verificationUrl && state.userCode && (
+                    <div className={`connection-box ${styles.authUrlBox}`}>
+                      <div className={styles.authUrlLabel}>{t('auth_login.kiro_device_code_hint')}</div>
+                      <div className={styles.deviceCodeValue}>{state.userCode}</div>
+                      <div className={styles.authUrlActions}>
+                        <Button variant="secondary" size="sm" onClick={() => copyLink(state.userCode!)}>
+                          {t('common.copy')}
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => window.open(state.verificationUrl, '_blank', 'noopener,noreferrer')}
+                        >
+                          {t(getAuthKey(provider.id, 'open_link'))}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                   {state.url && (
                     <div className={styles.authUrlBox}>
                       <div className={styles.authUrlLabel}>{t(provider.urlLabelKey)}</div>
@@ -436,116 +471,13 @@ export function OAuthPage() {
                           {t(getAuthKey(provider.id, 'open_link'))}
                         </Button>
                       </div>
-=======
-                <div className="hint">{t(provider.hintKey)}</div>
-                {provider.id === 'gemini-cli' && (
-                  <div className={styles.geminiProjectField}>
-                    <Input
-                      label={t('auth_login.gemini_cli_project_id_label')}
-                      hint={t('auth_login.gemini_cli_project_id_hint')}
-                      value={state.projectId || ''}
-                      error={state.projectIdError}
-                      onChange={(e) =>
-                        updateProviderState(provider.id, {
-                          projectId: e.target.value,
-                          projectIdError: undefined
-                        })
-                      }
-                      placeholder={t('auth_login.gemini_cli_project_id_placeholder')}
-                    />
-                  </div>
-                )}
-                {provider.id === 'kiro' && (
-                  <div className={styles.kiroMethodField}>
-                    <label className={styles.kiroMethodLabel}>{t('auth_login.kiro_method_label')}</label>
-                    <div className={styles.kiroMethodButtons}>
-                      {KIRO_METHODS.map((method) => (
-                        <Button
-                          key={method.value}
-                          variant={(state.kiroMethod || 'google') === method.value ? 'primary' : 'secondary'}
-                          size="sm"
-                          onClick={() => updateProviderState(provider.id, { kiroMethod: method.value })}
-                          disabled={state.polling}
-                        >
-                          {t(method.labelKey)}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {provider.id === 'kiro' && state.polling && !state.url && !state.verificationUrl && (
-                  <div className="status-badge" style={{ marginTop: 8 }}>
-                    {t('auth_login.kiro_waiting_auth_url')}
-                  </div>
-                )}
-                {provider.id === 'kiro' && state.verificationUrl && state.userCode && (
-                  <div className={`connection-box ${styles.authUrlBox}`}>
-                    <div className={styles.authUrlLabel}>{t('auth_login.kiro_device_code_hint')}</div>
-                    <div className={styles.deviceCodeValue}>{state.userCode}</div>
-                    <div className={styles.authUrlActions}>
-                      <Button variant="secondary" size="sm" onClick={() => copyLink(state.userCode!)}>
-                        {t('common.copy')}
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => window.open(state.verificationUrl, '_blank', 'noopener,noreferrer')}
-                      >
-                        {t(getAuthKey(provider.id, 'open_link'))}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                {state.url && (
-                  <div className={`connection-box ${styles.authUrlBox}`}>
-                    <div className={styles.authUrlLabel}>{t(provider.urlLabelKey)}</div>
-                    <div className={styles.authUrlValue}>{state.url}</div>
-                    <div className={styles.authUrlActions}>
-                      <Button variant="secondary" size="sm" onClick={() => copyLink(state.url!)}>
-                        {t(getAuthKey(provider.id, 'copy_link'))}
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => window.open(state.url, '_blank', 'noopener,noreferrer')}
-                      >
-                        {t(getAuthKey(provider.id, 'open_link'))}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                {canSubmitCallback && (
-                  <div className={styles.callbackSection}>
-                    <Input
-                      label={t('auth_login.oauth_callback_label')}
-                      hint={provider.id === 'kiro' ? t('auth_login.kiro_callback_hint') : t('auth_login.oauth_callback_hint')}
-                      value={state.callbackUrl || ''}
-                      onChange={(e) =>
-                        updateProviderState(provider.id, {
-                          callbackUrl: e.target.value,
-                          callbackStatus: undefined,
-                          callbackError: undefined
-                        })
-                      }
-                      placeholder={provider.id === 'kiro' ? 'kiro://kiro.kiroAgent/authenticate-success?code=...&state=...' : t('auth_login.oauth_callback_placeholder')}
-                    />
-                    <div className={styles.callbackActions}>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => submitCallback(provider.id)}
-                        loading={state.callbackSubmitting}
-                      >
-                        {t('auth_login.oauth_callback_button')}
-                      </Button>
->>>>>>> ac907c3 (feat: Add Kiro OAuth provider and enable auto refresh in Logs viewer)
                     </div>
                   )}
                   {canSubmitCallback && (
                     <div className={styles.callbackSection}>
                       <Input
                         label={t('auth_login.oauth_callback_label')}
-                        hint={t('auth_login.oauth_callback_hint')}
+                        hint={provider.id === 'kiro' ? t('auth_login.kiro_callback_hint') : t('auth_login.oauth_callback_hint')}
                         value={state.callbackUrl || ''}
                         onChange={(e) =>
                           updateProviderState(provider.id, {
@@ -554,7 +486,7 @@ export function OAuthPage() {
                             callbackError: undefined
                           })
                         }
-                        placeholder={t('auth_login.oauth_callback_placeholder')}
+                        placeholder={provider.id === 'kiro' ? 'kiro://kiro.kiroAgent/authenticate-success?code=...&state=...' : t('auth_login.oauth_callback_placeholder')}
                       />
                       <div className={styles.callbackActions}>
                         <Button
