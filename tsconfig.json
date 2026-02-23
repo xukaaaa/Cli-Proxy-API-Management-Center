@@ -27,5 +27,6 @@
     }
   },
   "include": ["src"],
+  "exclude": ["**/*.disabled", "**/*.disabled/**"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

@@ -183,6 +183,7 @@ export interface AntigravityQuotaGroupDefinition {
 export interface GeminiCliQuotaGroupDefinition {
   id: string;
   label: string;
+  preferredModelId?: string;
   modelIds: string[];
 }
 
@@ -216,6 +217,15 @@ export interface CodexRateLimitInfo {
   secondaryWindow?: CodexUsageWindow | null;
 }
 
+export interface CodexAdditionalRateLimit {
+  limit_name?: string;
+  limitName?: string;
+  metered_feature?: string;
+  meteredFeature?: string;
+  rate_limit?: CodexRateLimitInfo | null;
+  rateLimit?: CodexRateLimitInfo | null;
+}
+
 export interface CodexUsagePayload {
   plan_type?: string;
   planType?: string;
@@ -223,6 +233,48 @@ export interface CodexUsagePayload {
   rateLimit?: CodexRateLimitInfo | null;
   code_review_rate_limit?: CodexRateLimitInfo | null;
   codeReviewRateLimit?: CodexRateLimitInfo | null;
+  additional_rate_limits?: CodexAdditionalRateLimit[] | null;
+  additionalRateLimits?: CodexAdditionalRateLimit[] | null;
+}
+
+// Claude API payload types
+export interface ClaudeUsageWindow {
+  utilization: number;
+  resets_at: string;
+}
+
+export interface ClaudeExtraUsage {
+  is_enabled: boolean;
+  monthly_limit: number;
+  used_credits: number;
+  utilization: number | null;
+}
+
+export interface ClaudeUsagePayload {
+  five_hour?: ClaudeUsageWindow | null;
+  seven_day?: ClaudeUsageWindow | null;
+  seven_day_oauth_apps?: ClaudeUsageWindow | null;
+  seven_day_opus?: ClaudeUsageWindow | null;
+  seven_day_sonnet?: ClaudeUsageWindow | null;
+  seven_day_cowork?: ClaudeUsageWindow | null;
+  iguana_necktie?: ClaudeUsageWindow | null;
+  extra_usage?: ClaudeExtraUsage | null;
+}
+
+export interface ClaudeQuotaWindow {
+  id: string;
+  label: string;
+  labelKey?: string;
+  usedPercent: number | null;
+  resetLabel: string;
+}
+
+export interface ClaudeQuotaState {
+  status: 'idle' | 'loading' | 'success' | 'error';
+  windows: ClaudeQuotaWindow[];
+  extraUsage?: ClaudeExtraUsage | null;
+  error?: string;
+  errorStatus?: number;
 }
 
 // Quota state types
@@ -262,6 +314,7 @@ export interface CodexQuotaWindow {
   id: string;
   label: string;
   labelKey?: string;
+  labelParams?: Record<string, string | number>;
   usedPercent: number | null;
   resetLabel: string;
 }

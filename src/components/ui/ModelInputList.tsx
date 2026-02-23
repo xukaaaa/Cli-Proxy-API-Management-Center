@@ -12,10 +12,18 @@ interface ModelEntry {
 interface ModelInputListProps {
   entries: ModelEntry[];
   onChange: (entries: ModelEntry[]) => void;
-  addLabel: string;
+  addLabel?: string;
   disabled?: boolean;
   namePlaceholder?: string;
   aliasPlaceholder?: string;
+  hideAddButton?: boolean;
+  onAdd?: () => void;
+  className?: string;
+  rowClassName?: string;
+  inputClassName?: string;
+  removeButtonClassName?: string;
+  removeButtonTitle?: string;
+  removeButtonAriaLabel?: string;
   aliasInputMode?: 'text' | 'select';
   aliasOptions?: string[];
   aliasEmptyOptionLabel?: string;
@@ -52,6 +60,7 @@ export const entriesToModels = (entries: ModelEntry[]): ModelAlias[] => {
     });
 };
 
+export { type ModelEntry };
 export function ModelInputList({
   entries,
   onChange,
@@ -59,6 +68,14 @@ export function ModelInputList({
   disabled = false,
   namePlaceholder = 'model-name',
   aliasPlaceholder = 'alias (optional)',
+  hideAddButton = false,
+  onAdd,
+  className = '',
+  rowClassName = '',
+  inputClassName = '',
+  removeButtonClassName = '',
+  removeButtonTitle = 'Remove',
+  removeButtonAriaLabel = 'Remove',
   aliasInputMode = 'text',
   aliasOptions = [],
   aliasEmptyOptionLabel,
@@ -67,6 +84,9 @@ export function ModelInputList({
   thinkingBudgetPlaceholder = 'thinking'
 }: ModelInputListProps) {
   const currentEntries = entries.length ? entries : [{ name: '', alias: '', thinkingBudget: '' }];
+  const containerClassName = ['header-input-list', className].filter(Boolean).join(' ');
+  const inputClassNames = ['input', inputClassName].filter(Boolean).join(' ');
+  const rowClassNames = ['header-input-row', rowClassName].filter(Boolean).join(' ');
 
   const updateEntry = (index: number, field: 'name' | 'alias' | 'thinkingBudget', value: string) => {
     const next = currentEntries.map((entry, idx) => (idx === index ? { ...entry, [field]: value } : entry));
@@ -74,7 +94,11 @@ export function ModelInputList({
   };
 
   const addEntry = () => {
-    onChange([...currentEntries, { name: '', alias: '', thinkingBudget: '' }]);
+    if (onAdd) {
+      onAdd();
+    } else {
+      onChange([...currentEntries, { name: '', alias: '', thinkingBudget: '' }]);
+    }
   };
 
   const removeEntry = (index: number) => {
@@ -83,12 +107,12 @@ export function ModelInputList({
   };
 
   return (
-    <div className="header-input-list">
+    <div className={containerClassName}>
       {currentEntries.map((entry, index) => (
         <Fragment key={index}>
-          <div className={`header-input-row ${showThinkingBudgetSelect ? 'header-input-row--with-thinking' : ''}`}>
+          <div className={`${rowClassNames} ${showThinkingBudgetSelect ? 'header-input-row--with-thinking' : ''}`}>
             <input
-              className="input"
+              className={inputClassNames}
               placeholder={namePlaceholder}
               value={entry.name}
               onChange={(e) => updateEntry(index, 'name', e.target.value)}
@@ -97,7 +121,7 @@ export function ModelInputList({
             <span className="header-separator">→</span>
             {aliasInputMode === 'select' ? (
               <select
-                className="input"
+                className={inputClassNames}
                 value={entry.alias}
                 onChange={(e) => updateEntry(index, 'alias', e.target.value)}
                 disabled={disabled}
@@ -114,7 +138,7 @@ export function ModelInputList({
               </select>
             ) : (
               <input
-                className="input"
+                className={inputClassNames}
                 placeholder={aliasPlaceholder}
                 value={entry.alias}
                 onChange={(e) => updateEntry(index, 'alias', e.target.value)}
@@ -123,7 +147,7 @@ export function ModelInputList({
             )}
             {showThinkingBudgetSelect ? (
               <select
-                className="input"
+                className={inputClassNames}
                 value={entry.thinkingBudget ?? ''}
                 onChange={(e) => updateEntry(index, 'thinkingBudget', e.target.value)}
                 disabled={disabled}
@@ -146,17 +170,20 @@ export function ModelInputList({
               size="sm"
               onClick={() => removeEntry(index)}
               disabled={disabled || currentEntries.length <= 1}
-              title="Remove"
-              aria-label="Remove"
+              className={removeButtonClassName}
+              title={removeButtonTitle}
+              aria-label={removeButtonAriaLabel}
             >
               <IconX size={14} />
             </Button>
           </div>
         </Fragment>
       ))}
-      <Button variant="secondary" size="sm" onClick={addEntry} disabled={disabled} className="align-start">
-        {addLabel}
-      </Button>
+      {!hideAddButton && addLabel && (
+        <Button variant="secondary" size="sm" onClick={addEntry} disabled={disabled} className="align-start">
+          {addLabel}
+        </Button>
+      )}
     </div>
   );
 }

@@ -21,7 +21,10 @@ export interface Config {
   usageStatisticsEnabled?: boolean;
   requestLog?: boolean;
   loggingToFile?: boolean;
+  logsMaxTotalSizeMb?: number;
   wsAuth?: boolean;
+  forceModelPrefix?: boolean;
+  routingStrategy?: string;
   apiKeys?: string[];
   apiKeyPolicies?: Record<string, QuotaPolicy>;
   ampcode?: AmpcodeConfig;
@@ -29,9 +32,10 @@ export interface Config {
   geminiApiKeys?: GeminiKeyConfig[];
   codexApiKeys?: ProviderKeyConfig[];
   claudeApiKeys?: ProviderKeyConfig[];
+  vertexApiKeys?: ProviderKeyConfig[];
   openaiCompatibility?: OpenAIProviderConfig[];
   oauthExcludedModels?: Record<string, string[]>;
-  raw?: Record<string, any>;
+  raw?: Record<string, unknown>;
 }
 
 export type RawConfigSection =
@@ -42,13 +46,17 @@ export type RawConfigSection =
   | 'usage-statistics-enabled'
   | 'request-log'
   | 'logging-to-file'
+  | 'logs-max-total-size-mb'
   | 'ws-auth'
+  | 'force-model-prefix'
+  | 'routing/strategy'
   | 'api-keys'
   | 'ampcode'
   | 'claudecode'
   | 'gemini-api-key'
   | 'codex-api-key'
   | 'claude-api-key'
+  | 'vertex-api-key'
   | 'openai-compatibility'
   | 'oauth-excluded-models';
 

@@ -18,6 +18,7 @@ export interface ModelEntry {
 
 export interface OpenAIFormState {
   name: string;
+  priority?: number;
   prefix: string;
   baseUrl: string;
   headers: HeaderEntry[];
@@ -38,11 +39,21 @@ export interface ClaudeCodeFormState {
   mappingEntries: ModelEntry[];
 }
 
-export type GeminiFormState = GeminiKeyConfig & { excludedText: string };
-
-export type ProviderFormState = ProviderKeyConfig & {
+export type GeminiFormState = Omit<GeminiKeyConfig, 'headers' | 'models'> & {
+  headers: HeaderEntry[];
   modelEntries: ModelEntry[];
   excludedText: string;
+};
+
+export type ProviderFormState = Omit<ProviderKeyConfig, 'headers'> & {
+  headers: HeaderEntry[];
+  modelEntries: ModelEntry[];
+  excludedText: string;
+};
+
+export type VertexFormState = Omit<ProviderKeyConfig, 'headers' | 'excludedModels'> & {
+  headers: HeaderEntry[];
+  modelEntries: ModelEntry[];
 };
 
 export interface ProviderSectionProps<TConfig> {
@@ -54,13 +65,4 @@ export interface ProviderSectionProps<TConfig> {
   onAdd: () => void;
   onDelete: (index: number) => void;
   onToggle?: (index: number, enabled: boolean) => void;
-}
-
-export interface ProviderModalProps<TConfig, TPayload = TConfig> {
-  isOpen: boolean;
-  editIndex: number | null;
-  initialData?: TConfig;
-  onClose: () => void;
-  onSave: (data: TPayload, index: number | null) => Promise<void>;
-  disabled?: boolean;
 }

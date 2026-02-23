@@ -14,7 +14,7 @@ export const claudecodeApi = {
 
   async getModelMappings(): Promise<ClaudeCodeModelMapping[]> {
     const data = await apiClient.get('/claudecode/model-mappings');
-    const list = data?.['model-mappings'] ?? data?.modelMappings ?? data?.items ?? data;
+    const list = (data as any)?.['model-mappings'] ?? (data as any)?.modelMappings ?? (data as any)?.items ?? data;
     return normalizeClaudeCodeModelMappings(list);
   },
 

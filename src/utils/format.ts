@@ -3,18 +3,28 @@
  * 从原项目 src/utils/string.js 迁移
  */
 
+const resolveDefaultLocale = (): string | undefined => {
+  const fromDocument =
+    typeof document !== 'undefined' ? document.documentElement?.lang?.trim() : '';
+  if (fromDocument) return fromDocument;
+  const fromNavigator = typeof navigator !== 'undefined' ? navigator.language?.trim() : '';
+  return fromNavigator || undefined;
+};
+
 /**
  * 隐藏 API Key 中间部分，仅保留前后两位
  */
 export function maskApiKey(key: string): string {
-  if (!key) {
+  const trimmed = String(key || '').trim();
+  if (!trimmed) {
     return '';
   }
 
-  const visibleChars = 2;
-  const start = key.slice(0, visibleChars);
-  const end = key.slice(-visibleChars);
-  const maskedLength = Math.max(key.length - visibleChars * 2, 1);
+  const MASKED_LENGTH = 10;
+  const visibleChars = trimmed.length < 4 ? 1 : 2;
+  const start = trimmed.slice(0, visibleChars);
+  const end = trimmed.slice(-visibleChars);
+  const maskedLength = Math.max(MASKED_LENGTH - visibleChars * 2, 1);
   const masked = '*'.repeat(maskedLength);
 
   return `${start}${masked}${end}`;
@@ -36,14 +46,15 @@ export function formatFileSize(bytes: number): string {
 /**
  * 格式化日期时间
  */
-export function formatDateTime(date: string | Date): string {
+export function formatDateTime(date: string | Date, locale?: string): string {
   const d = typeof date === 'string' ? new Date(date) : date;
 
   if (isNaN(d.getTime())) {
     return 'Invalid Date';
   }
 
-  return d.toLocaleString('zh-CN', {
+  const resolvedLocale = locale?.trim() || resolveDefaultLocale();
+  return d.toLocaleString(resolvedLocale, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -87,8 +98,9 @@ export function formatUnixTimestamp(value: unknown, locale?: string): string {
 /**
  * 格式化数字（添加千位分隔符）
  */
-export function formatNumber(num: number): string {
-  return num.toLocaleString('zh-CN');
+export function formatNumber(num: number, locale?: string): string {
+  const resolvedLocale = locale?.trim() || resolveDefaultLocale();
+  return num.toLocaleString(resolvedLocale);
 }
 
 /**
