@@ -96,13 +96,17 @@ interface QuotaSectionProps<TState extends QuotaStatusState, TData> {
   files: AuthFileItem[];
   loading: boolean;
   disabled: boolean;
+  allowDisabledFiles?: boolean;
+  title?: string;
 }
 
 export function QuotaSection<TState extends QuotaStatusState, TData>({
   config,
   files,
   loading,
-  disabled
+  disabled,
+  allowDisabledFiles = false,
+  title
 }: QuotaSectionProps<TState, TData>) {
   const { t } = useTranslation();
   const resolvedTheme: ResolvedTheme = useThemeStore((state) => state.resolvedTheme);
@@ -206,7 +210,7 @@ export function QuotaSection<TState extends QuotaStatusState, TData>({
 
   const refreshQuotaForFile = useCallback(
     async (file: AuthFileItem) => {
-      if (disabled || file.disabled) return;
+      if (disabled || (!allowDisabledFiles && file.disabled)) return;
       if (quota[file.name]?.status === 'loading') return;
 
       setQuota((prev) => ({
@@ -234,12 +238,12 @@ export function QuotaSection<TState extends QuotaStatusState, TData>({
         );
       }
     },
-    [config, disabled, quota, setQuota, showNotification, t]
+    [allowDisabledFiles, config, disabled, quota, setQuota, showNotification, t]
   );
 
   const titleNode = (
     <div className={styles.titleWrapper}>
-      <span>{t(`${config.i18nPrefix}.title`)}</span>
+      <span>{title ?? t(`${config.i18nPrefix}.title`)}</span>
       {filteredFiles.length > 0 && (
         <span className={styles.countBadge}>
           {filteredFiles.length}
@@ -317,7 +321,7 @@ export function QuotaSection<TState extends QuotaStatusState, TData>({
                 cardIdleMessageKey={config.cardIdleMessageKey}
                 cardClassName={config.cardClassName}
                 defaultType={config.type}
-                canRefresh={!disabled && !item.disabled}
+                canRefresh={!disabled && (allowDisabledFiles || !item.disabled)}
                 onRefresh={() => void refreshQuotaForFile(item)}
                 renderQuotaItems={config.renderQuotaItems}
               />

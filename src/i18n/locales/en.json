@@ -124,6 +124,7 @@
   "extend_feature": {
     "title": "Extend Feature",
     "description": "Extended provider features live here to keep the main quota page focused.",
+    "disabled_codex_title": "Disabled Codex Quota",
     "card_title": "Coming Soon",
     "placeholder": "This page is ready for the next feature implementation."
   },

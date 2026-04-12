@@ -124,6 +124,7 @@
   "extend_feature": {
     "title": "扩展功能",
     "description": "扩展提供商功能集中放在这里，避免主配额页面过于臃肿。",
+    "disabled_codex_title": "已禁用 Codex 配额",
     "card_title": "即将推出",
     "placeholder": "该页面已准备好承载下一步功能实现。"
   },

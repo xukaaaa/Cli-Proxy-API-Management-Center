@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useHeaderRefresh } from '@/hooks/useHeaderRefresh';
 import { useAuthStore } from '@/stores';
 import { authFilesApi, configFileApi } from '@/services/api';
-import { KIRO_CONFIG, QuotaSection } from '@/components/quota';
+import { CODEX_CONFIG, KIRO_CONFIG, QuotaSection } from '@/components/quota';
 import type { AuthFileItem } from '@/types';
+import { isCodexFile, isDisabledAuthFile } from '@/utils/quota';
 import styles from './ExtendFeaturePage.module.scss';
 
 export function ExtendFeaturePage() {
@@ -16,6 +17,13 @@ export function ExtendFeaturePage() {
   const [error, setError] = useState('');
 
   const disableControls = connectionStatus !== 'connected';
+  const disabledCodexConfig = useMemo(
+    () => ({
+      ...CODEX_CONFIG,
+      filterFn: (file: AuthFileItem) => isCodexFile(file) && isDisabledAuthFile(file),
+    }),
+    []
+  );
 
   const loadConfig = useCallback(async () => {
     try {
@@ -65,6 +73,14 @@ export function ExtendFeaturePage() {
         files={files}
         loading={loading}
         disabled={disableControls}
+      />
+      <QuotaSection
+        config={disabledCodexConfig}
+        files={files}
+        loading={loading}
+        disabled={disableControls}
+        allowDisabledFiles
+        title={t('extend_feature.disabled_codex_title')}
       />
     </div>
   );
