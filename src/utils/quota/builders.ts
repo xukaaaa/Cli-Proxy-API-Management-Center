@@ -14,6 +14,9 @@ import type {
   KimiLimitItem,
   KimiLimitWindow,
   KimiQuotaRow,
+  KiroUsagePayload,
+  KiroUsageLimitPayload,
+  KiroQuotaRow,
 } from '@/types';
 import {
   ANTIGRAVITY_QUOTA_GROUPS,
@@ -404,4 +407,147 @@ export function buildKimiQuotaRows(payload: KimiUsagePayload): KimiQuotaRow[] {
   }
 
   return rows;
+}
+
+const kiroLabel = (limit: KiroUsageLimitPayload, index: number): string => {
+  const candidates = [
+    limit.displayName,
+    limit.display_name,
+    limit.description,
+    limit.name,
+    limit.limitType,
+    limit.limit_type,
+    limit.resourceType,
+    limit.resource_type,
+    limit.interval,
+    limit.unit,
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
+  }
+  return `Limit ${index + 1}`;
+};
+
+function kiroResetLabelFromValue(resetValue: unknown): string | undefined {
+  if (typeof resetValue === 'number' && Number.isFinite(resetValue)) {
+    return new Date(resetValue * 1000).toISOString();
+  }
+  if (typeof resetValue === 'string' && resetValue.trim()) {
+    const numericValue = Number(resetValue);
+    if (Number.isFinite(numericValue)) {
+      return new Date(numericValue * 1000).toISOString();
+    }
+    return resetValue.trim();
+  }
+
+  return undefined;
+}
+
+function kiroResetLabel(
+  limit: KiroUsageLimitPayload,
+  payload: KiroUsagePayload
+): string | undefined {
+  return kiroResetLabelFromValue(
+    limit.resetDate ??
+      limit.reset_date ??
+      limit.resetAt ??
+      limit.reset_at ??
+      limit.nextDateReset ??
+      limit.next_date_reset ??
+      payload.nextDateReset ??
+      payload.next_date_reset
+  );
+}
+
+export function buildKiroQuotaRows(payload: KiroUsagePayload): KiroQuotaRow[] {
+  const candidates = [
+    payload.usageLimits,
+    payload.usage_limits,
+    payload.limits,
+    payload.usageBreakdownList,
+    payload.usage_breakdown_list,
+  ];
+  const limits = candidates.find(
+    (value): value is KiroUsageLimitPayload[] => Array.isArray(value) && value.length > 0
+  ) ?? [];
+
+  return limits.reduce<KiroQuotaRow[]>((rows, limit, index) => {
+    const normalizedLimit = limit && typeof limit === 'object' ? limit : null;
+    if (!normalizedLimit) return rows;
+
+    const limitValue =
+      toInt(
+        normalizedLimit.limit ??
+          normalizedLimit.usageLimit ??
+          normalizedLimit.usage_limit ??
+          normalizedLimit.usageLimitWithPrecision ??
+          normalizedLimit.usage_limit_with_precision
+      ) ?? 0;
+
+    const usedValue =
+      toInt(
+        normalizedLimit.amountUsed ??
+          normalizedLimit.amount_used ??
+          normalizedLimit.currentUsage ??
+          normalizedLimit.current_usage ??
+          normalizedLimit.currentUsageWithPrecision ??
+          normalizedLimit.current_usage_with_precision
+      ) ?? 0;
+
+    const remainingValue =
+      toInt(normalizedLimit.amountRemaining ?? normalizedLimit.amount_remaining) ??
+      (limitValue > 0 ? Math.max(0, limitValue - usedValue) : null);
+
+    if (limitValue > 0 || usedValue > 0) {
+      rows.push({
+        id: `kiro-monthly-${index}`,
+        label: kiroLabel(normalizedLimit, index),
+        used: usedValue,
+        limit: limitValue,
+        remaining: remainingValue,
+        resetLabel: kiroResetLabel(normalizedLimit, payload),
+        mode: 'remaining',
+        section: 'monthly',
+      });
+    }
+
+    const freeTrial = normalizedLimit.freeTrialInfo ?? normalizedLimit.free_trial_info;
+    if (freeTrial && typeof freeTrial === 'object') {
+      const trialLimit =
+        toInt(
+          freeTrial.usageLimit ??
+            freeTrial.usage_limit ??
+            freeTrial.usageLimitWithPrecision ??
+            freeTrial.usage_limit_with_precision
+        ) ?? 0;
+      const trialUsed =
+        toInt(
+          freeTrial.currentUsage ??
+            freeTrial.current_usage ??
+            freeTrial.currentUsageWithPrecision ??
+            freeTrial.current_usage_with_precision
+        ) ?? 0;
+      const trialRemaining = trialLimit > 0 ? Math.max(0, trialLimit - trialUsed) : null;
+
+      const trialExpiryRaw = freeTrial.freeTrialExpiry ?? freeTrial.free_trial_expiry;
+      const trialExpiryLabel = kiroResetLabelFromValue(trialExpiryRaw);
+      const trialExpiryTime = trialExpiryLabel ? new Date(trialExpiryLabel).getTime() : NaN;
+      const isExpiredTrial = Number.isFinite(trialExpiryTime) && trialExpiryTime <= Date.now();
+
+      if (!isExpiredTrial && (trialLimit > 0 || trialUsed > 0)) {
+        rows.push({
+          id: `kiro-trial-${index}`,
+          label: `${kiroLabel(normalizedLimit, index)} Trial`,
+          used: trialUsed,
+          limit: trialLimit,
+          remaining: trialRemaining,
+          resetLabel: trialExpiryLabel,
+          mode: 'remaining',
+          section: 'trial',
+        });
+      }
+    }
+
+    return rows;
+  }, []);
 }

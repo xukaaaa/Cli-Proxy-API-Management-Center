@@ -477,3 +477,14 @@ export function IconSidebarSystem({ size = 20, ...props }: IconProps) {
     </svg>
   );
 }
+
+export function IconSidebarExtendFeature({ size = 20, ...props }: IconProps) {
+  return (
+    <svg {...sidebarSvgProps} width={size} height={size} {...props}>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M8 10h8" />
+      <path d="M8 14h8" />
+      <path d="M12 7v10" fill="currentColor" fillOpacity="0.12" />
+    </svg>
+  );
+}

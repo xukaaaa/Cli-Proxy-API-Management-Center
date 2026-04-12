@@ -6,7 +6,7 @@ import type { AuthFileItem } from '@/types';
 import {
   normalizeStringValue,
   normalizePlanType,
-  parseIdTokenPayload
+  parseIdTokenPayload,
 } from './parsers';
 
 export function extractCodexChatgptAccountId(value: unknown): string | null {
@@ -106,6 +106,63 @@ export function resolveGeminiCliProjectId(file: AuthFileItem): string | null {
   for (const candidate of candidates) {
     const projectId = extractGeminiCliProjectId(candidate);
     if (projectId) return projectId;
+  }
+
+  return null;
+}
+
+export function resolveKiroAccessToken(file: AuthFileItem): string | null {
+  const metadata =
+    file && typeof file.metadata === 'object' && file.metadata !== null
+      ? (file.metadata as Record<string, unknown>)
+      : null;
+  const attributes =
+    file && typeof file.attributes === 'object' && file.attributes !== null
+      ? (file.attributes as Record<string, unknown>)
+      : null;
+
+  const candidates = [
+    file.access_token,
+    file.accessToken,
+    metadata?.access_token,
+    metadata?.accessToken,
+    attributes?.access_token,
+    attributes?.accessToken,
+  ];
+
+  for (const candidate of candidates) {
+    const token = normalizeStringValue(candidate);
+    if (token) return token;
+  }
+
+  return null;
+}
+
+export function resolveKiroProfileArn(file: AuthFileItem): string | null {
+  const metadata =
+    file && typeof file.metadata === 'object' && file.metadata !== null
+      ? (file.metadata as Record<string, unknown>)
+      : null;
+  const attributes =
+    file && typeof file.attributes === 'object' && file.attributes !== null
+      ? (file.attributes as Record<string, unknown>)
+      : null;
+
+  const candidates = [
+    file.profileArn,
+    file.profile_arn,
+    file.arn,
+    metadata?.profileArn,
+    metadata?.profile_arn,
+    metadata?.arn,
+    attributes?.profileArn,
+    attributes?.profile_arn,
+    attributes?.arn,
+  ];
+
+  for (const candidate of candidates) {
+    const arn = normalizeStringValue(candidate);
+    if (arn) return arn;
   }
 
   return null;

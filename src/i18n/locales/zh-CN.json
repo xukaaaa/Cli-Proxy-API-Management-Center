@@ -118,7 +118,30 @@
     "usage_stats": "使用统计",
     "config_management": "配置面板",
     "logs": "日志查看",
-    "system_info": "中心信息"
+    "system_info": "中心信息",
+    "extend_feature": "扩展功能"
+  },
+  "extend_feature": {
+    "title": "扩展功能",
+    "description": "扩展提供商功能集中放在这里，避免主配额页面过于臃肿。",
+    "card_title": "即将推出",
+    "placeholder": "该页面已准备好承载下一步功能实现。"
+  },
+  "kiro_quota": {
+    "title": "Kiro 配额",
+    "empty_title": "暂无 Kiro 认证",
+    "empty_desc": "上传 Kiro 凭证后即可在此查看使用限制。",
+    "idle": "点击此处刷新配额",
+    "loading": "正在加载配额...",
+    "load_failed": "配额获取失败：{{message}}",
+    "missing_auth_index": "认证文件缺少 auth_index",
+    "missing_profile_arn": "Kiro 凭证缺少 profile ARN",
+    "empty_data": "暂无配额数据",
+    "remaining_suffix": "剩余",
+    "used_suffix": "已用",
+    "trial_label_suffix": "试用",
+    "refresh_button": "刷新配额",
+    "fetch_all": "获取全部"
   },
   "dashboard": {
     "title": "仪表盘",
@@ -527,6 +550,7 @@
     "filter_gemini": "Gemini",
     "filter_gemini-cli": "GeminiCLI",
     "filter_kimi": "Kimi",
+    "filter_kiro": "Kiro",
     "filter_aistudio": "AIStudio",
     "filter_claude": "Claude",
     "filter_codex": "Codex",

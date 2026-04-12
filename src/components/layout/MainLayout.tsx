@@ -16,6 +16,7 @@ import {
   IconSidebarAuthFiles,
   IconSidebarConfig,
   IconSidebarDashboard,
+  IconSidebarExtendFeature,
   IconSidebarLogs,
   IconSidebarOauth,
   IconSidebarProviders,
@@ -46,6 +47,7 @@ const sidebarIcons: Record<string, ReactNode> = {
   config: <IconSidebarConfig size={18} />,
   logs: <IconSidebarLogs size={18} />,
   system: <IconSidebarSystem size={18} />,
+  extendFeature: <IconSidebarExtendFeature size={18} />,
 };
 
 // Header action icons - smaller size for header buttons
@@ -426,6 +428,7 @@ export function MainLayout() {
     { path: '/oauth', label: t('nav.oauth', { defaultValue: 'OAuth' }), icon: sidebarIcons.oauth },
     { path: '/quota', label: t('nav.quota_management'), icon: sidebarIcons.quota },
     { path: '/usage', label: t('nav.usage_stats'), icon: sidebarIcons.usage },
+    { path: '/extend-feature', label: t('nav.extend_feature'), icon: sidebarIcons.extendFeature },
     ...(config?.loggingToFile
       ? [{ path: '/logs', label: t('nav.logs'), icon: sidebarIcons.logs }]
       : []),

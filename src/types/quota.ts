@@ -306,3 +306,78 @@ export interface KimiQuotaState {
   error?: string;
   errorStatus?: number;
 }
+
+export interface KiroFreeTrialInfo {
+  currentUsage?: number | string;
+  current_usage?: number | string;
+  currentUsageWithPrecision?: number | string;
+  current_usage_with_precision?: number | string;
+  usageLimit?: number | string;
+  usage_limit?: number | string;
+  usageLimitWithPrecision?: number | string;
+  usage_limit_with_precision?: number | string;
+  freeTrialExpiry?: string | number;
+  free_trial_expiry?: string | number;
+}
+
+export interface KiroUsageLimitPayload {
+  limitType?: string;
+  limit_type?: string;
+  limit?: number | string;
+  amountUsed?: number | string;
+  amount_used?: number | string;
+  amountRemaining?: number | string;
+  amount_remaining?: number | string;
+  resetDate?: string | number;
+  reset_date?: string | number;
+  resetAt?: string | number;
+  reset_at?: string | number;
+  nextDateReset?: string | number;
+  next_date_reset?: string | number;
+  unit?: string;
+  interval?: string;
+  description?: string;
+  name?: string;
+  displayName?: string;
+  display_name?: string;
+  usageLimit?: number | string;
+  usage_limit?: number | string;
+  usageLimitWithPrecision?: number | string;
+  usage_limit_with_precision?: number | string;
+  currentUsage?: number | string;
+  current_usage?: number | string;
+  currentUsageWithPrecision?: number | string;
+  current_usage_with_precision?: number | string;
+  resourceType?: string;
+  resource_type?: string;
+  freeTrialInfo?: KiroFreeTrialInfo | null;
+  free_trial_info?: KiroFreeTrialInfo | null;
+}
+
+export interface KiroUsagePayload {
+  usageLimits?: KiroUsageLimitPayload[];
+  usage_limits?: KiroUsageLimitPayload[];
+  limits?: KiroUsageLimitPayload[];
+  usageBreakdownList?: KiroUsageLimitPayload[];
+  usage_breakdown_list?: KiroUsageLimitPayload[];
+  nextDateReset?: string | number;
+  next_date_reset?: string | number;
+}
+
+export interface KiroQuotaRow {
+  id: string;
+  label: string;
+  used: number;
+  limit: number;
+  remaining: number | null;
+  resetLabel?: string;
+  mode?: 'remaining' | 'used';
+  section?: 'monthly' | 'trial';
+}
+
+export interface KiroQuotaState {
+  status: 'idle' | 'loading' | 'success' | 'error';
+  rows: KiroQuotaRow[];
+  error?: string;
+  errorStatus?: number;
+}

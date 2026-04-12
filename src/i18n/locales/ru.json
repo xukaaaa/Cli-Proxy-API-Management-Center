@@ -118,7 +118,30 @@
     "usage_stats": "Статистика использования",
     "config_management": "Панель конфигурации",
     "logs": "Просмотр логов",
-    "system_info": "Информация системы"
+    "system_info": "Информация системы",
+    "extend_feature": "Расширение"
+  },
+  "extend_feature": {
+    "title": "Расширение",
+    "description": "Расширенные функции провайдеров живут здесь, чтобы не перегружать основную страницу квот.",
+    "card_title": "Скоро",
+    "placeholder": "Эта страница готова для следующего этапа реализации функции."
+  },
+  "kiro_quota": {
+    "title": "Квота Kiro",
+    "empty_title": "Файлы авторизации Kiro отсутствуют",
+    "empty_desc": "Загрузите учётные данные Kiro, чтобы просматривать лимиты здесь.",
+    "idle": "Не загружено. Нажмите \"Обновить квоту\".",
+    "loading": "Загрузка квоты...",
+    "load_failed": "Не удалось загрузить квоту: {{message}}",
+    "missing_auth_index": "В файле авторизации отсутствует auth_index",
+    "missing_profile_arn": "В учётных данных Kiro отсутствует profile ARN",
+    "empty_data": "Данные по квоте отсутствуют",
+    "remaining_suffix": "осталось",
+    "used_suffix": "использовано",
+    "trial_label_suffix": "Пробный период",
+    "refresh_button": "Обновить квоту",
+    "fetch_all": "Получить все"
   },
   "dashboard": {
     "title": "Панель управления",
@@ -527,6 +550,7 @@
     "filter_gemini": "Gemini",
     "filter_gemini-cli": "GeminiCLI",
     "filter_kimi": "Kimi",
+    "filter_kiro": "Kiro",
     "filter_aistudio": "AIStudio",
     "filter_claude": "Claude",
     "filter_codex": "Codex",

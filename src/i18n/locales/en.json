@@ -118,7 +118,30 @@
     "usage_stats": "Usage Statistics",
     "config_management": "Config Panel",
     "logs": "Logs Viewer",
-    "system_info": "Management Center Info"
+    "system_info": "Management Center Info",
+    "extend_feature": "Extend Feature"
+  },
+  "extend_feature": {
+    "title": "Extend Feature",
+    "description": "Extended provider features live here to keep the main quota page focused.",
+    "card_title": "Coming Soon",
+    "placeholder": "This page is ready for the next feature implementation."
+  },
+  "kiro_quota": {
+    "title": "Kiro Quota",
+    "empty_title": "No Kiro Auth Files",
+    "empty_desc": "Upload a Kiro credential to inspect usage limits here.",
+    "idle": "Click here to refresh quota",
+    "loading": "Loading quota...",
+    "load_failed": "Failed to load quota: {{message}}",
+    "missing_auth_index": "Auth file missing auth_index",
+    "missing_profile_arn": "Kiro credential missing profile ARN",
+    "empty_data": "No quota data available",
+    "remaining_suffix": "left",
+    "used_suffix": "used",
+    "trial_label_suffix": "Trial",
+    "refresh_button": "Refresh Quota",
+    "fetch_all": "Fetch All"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -527,6 +550,7 @@
     "filter_gemini": "Gemini",
     "filter_gemini-cli": "GeminiCLI",
     "filter_kimi": "Kimi",
+    "filter_kiro": "Kiro",
     "filter_aistudio": "AIStudio",
     "filter_claude": "Claude",
     "filter_codex": "Codex",

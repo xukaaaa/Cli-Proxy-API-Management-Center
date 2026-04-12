@@ -38,6 +38,10 @@ export const TYPE_COLORS: Record<string, TypeColorSet> = {
     light: { bg: '#dce8ff', text: '#0560cf' },
     dark: { bg: '#003880', text: '#70b5ff' },
   },
+  kiro: {
+    light: { bg: '#ece7ff', text: '#5a3fd6' },
+    dark: { bg: '#2c2370', text: '#c1b6ff' },
+  },
   antigravity: {
     light: { bg: '#e0f7fa', text: '#006064' },
     dark: { bg: '#004d40', text: '#80deea' },
@@ -197,4 +201,18 @@ export const KIMI_USAGE_URL = 'https://api.kimi.com/coding/v1/usages';
 
 export const KIMI_REQUEST_HEADERS = {
   Authorization: 'Bearer $TOKEN$',
+};
+
+// Kiro API configuration
+export const KIRO_DEFAULT_PROFILE_ARN =
+  'arn:aws:codewhisperer:us-east-1:699475941385:profile/EHGA3GRVQMUK';
+
+export const KIRO_USAGE_URL =
+  'https://q.us-east-1.amazonaws.com/getUsageLimits?isEmailRequired=true&origin=AI_EDITOR&resourceType=AGENTIC_REQUEST&profileArn=$PROFILE_ARN$';
+
+export const KIRO_REQUEST_HEADERS = {
+  Authorization: 'Bearer $TOKEN$',
+  'x-amz-user-agent': 'aws-sdk-js/1.0.0 KiroIDE-0.8.0',
+  'User-Agent':
+    'aws-sdk-js/1.0.0 ua/2.1 os/darwin#24.1.0 lang/js md/nodejs#22.21.1 api/codewhispererruntime#1.0.0 m/N,E KiroIDE-0.8.0',
 };
