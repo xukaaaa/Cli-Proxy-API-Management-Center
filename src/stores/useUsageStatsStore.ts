@@ -31,6 +31,7 @@ export type LoadUsageStatsOptions = {
   staleTimeMs?: number;
   timeRange?: UsageTimeRange;
   minimumLookbackMs?: number;
+  exactRange?: { startMs: number; endMs: number };
 };
 
 type UsageLoadedRange = {
@@ -57,7 +58,12 @@ type UsageStatsState = {
 const createEmptyKeyStats = (): KeyStats => ({ bySource: {}, byAuthIndex: {} });
 
 let usageRequestToken = 0;
-let inFlightUsageRequest: { id: number; scopeKey: string; requestKey: string; promise: Promise<void> } | null = null;
+let inFlightUsageRequest: {
+  id: number;
+  scopeKey: string;
+  requestKey: string;
+  promise: Promise<void>;
+} | null = null;
 
 const getErrorMessage = (error: unknown) =>
   error instanceof Error
@@ -86,7 +92,9 @@ const getTargetStartMs = (
 
   const rangeStartMs = getRangeStartMs(timeRange, nowMs);
   const minimumStartMs =
-    typeof minimumLookbackMs === 'number' && Number.isFinite(minimumLookbackMs) && minimumLookbackMs > 0
+    typeof minimumLookbackMs === 'number' &&
+    Number.isFinite(minimumLookbackMs) &&
+    minimumLookbackMs > 0
       ? nowMs - minimumLookbackMs
       : null;
 
@@ -246,8 +254,10 @@ export const useUsageStatsStore = create<UsageStatsState>((set, get) => ({
     const force = options.force === true;
     const fullRange = options.fullRange === true;
     const staleTimeMs = options.staleTimeMs ?? USAGE_STATS_STALE_TIME_MS;
-    const nowMs = Date.now();
-    const targetStartMs = getTargetStartMs(options.timeRange, nowMs, options.minimumLookbackMs);
+    const exactRange = options.exactRange;
+    const nowMs = exactRange?.endMs ?? Date.now();
+    const targetStartMs =
+      exactRange?.startMs ?? getTargetStartMs(options.timeRange, nowMs, options.minimumLookbackMs);
     const { apiBase = '', managementKey = '' } = useAuthStore.getState();
     const scopeKey = `${apiBase}::${managementKey}`;
     const state = get();
@@ -278,20 +288,26 @@ export const useUsageStatsStore = create<UsageStatsState>((set, get) => ({
     }
 
     const requestState = scopeChanged ? get() : state;
-    const requestRanges = fullRange
-      ? [{ startMs: targetStartMs, endMs: nowMs }]
-      : resolveRequestRanges(requestState, targetStartMs, nowMs, force, fresh);
+    const requestRanges = exactRange
+      ? [{ startMs: exactRange.startMs, endMs: exactRange.endMs }]
+      : fullRange
+        ? [{ startMs: targetStartMs, endMs: nowMs }]
+        : resolveRequestRanges(requestState, targetStartMs, nowMs, force, fresh);
 
     if (!requestRanges.length) {
       set({ lastRefreshedAt: nowMs, scopeKey });
       return;
     }
 
-    const requestKey = `${scopeKey}::${fullRange ? 'full' : 'incremental'}::${requestRanges
+    const requestKey = `${scopeKey}::${exactRange ? 'exact' : fullRange ? 'full' : 'incremental'}::${requestRanges
       .map((range) => `${range.startMs ?? 'all'}-${range.endMs}`)
       .join(',')}`;
 
-    if (inFlightUsageRequest && inFlightUsageRequest.scopeKey === scopeKey && inFlightUsageRequest.requestKey === requestKey) {
+    if (
+      inFlightUsageRequest &&
+      inFlightUsageRequest.scopeKey === scopeKey &&
+      inFlightUsageRequest.requestKey === requestKey
+    ) {
       await inFlightUsageRequest.promise;
       return;
     }
@@ -308,9 +324,8 @@ export const useUsageStatsStore = create<UsageStatsState>((set, get) => ({
         if (requestId !== usageRequestToken) return;
 
         const currentState = get();
-        const nextDetailsByKey: Record<string, UsageDetailWithEndpoint> = fullRange
-          ? {}
-          : { ...currentState.usageDetailsByKey };
+        const nextDetailsByKey: Record<string, UsageDetailWithEndpoint> =
+          fullRange || exactRange ? {} : { ...currentState.usageDetailsByKey };
         const deletedUsageIds = currentState.deletedUsageIds;
 
         responses.forEach((response) => {
@@ -326,9 +341,10 @@ export const useUsageStatsStore = create<UsageStatsState>((set, get) => ({
         set({
           ...derived,
           usageDetailsByKey: nextDetailsByKey,
-          loadedRanges: fullRange
-            ? mergeLoadedRanges(requestRanges)
-            : mergeLoadedRanges([...currentState.loadedRanges, ...requestRanges]),
+          loadedRanges:
+            fullRange || exactRange
+              ? mergeLoadedRanges(requestRanges)
+              : mergeLoadedRanges([...currentState.loadedRanges, ...requestRanges]),
           loading: false,
           error: null,
           lastRefreshedAt: Date.now(),
@@ -342,7 +358,7 @@ export const useUsageStatsStore = create<UsageStatsState>((set, get) => ({
           error: message,
           scopeKey,
         });
-        throw new Error(message);
+        throw Object.assign(new Error(message), { cause: error });
       } finally {
         if (inFlightUsageRequest?.id === requestId) {
           inFlightUsageRequest = null;
@@ -363,7 +379,9 @@ export const useUsageStatsStore = create<UsageStatsState>((set, get) => ({
     set((state) => {
       const idSet = new Set(uniqueIds);
       const usageDetailsByKey = Object.fromEntries(
-        Object.entries(state.usageDetailsByKey).filter(([, detail]) => !detail.id || !idSet.has(detail.id))
+        Object.entries(state.usageDetailsByKey).filter(
+          ([, detail]) => !detail.id || !idSet.has(detail.id)
+        )
       ) as Record<string, UsageDetailWithEndpoint>;
       const deletedUsageIds = { ...state.deletedUsageIds };
       uniqueIds.forEach((id) => {
